@@ -1,0 +1,43 @@
+local action = require(script.Parent.action)()
+local changed = require(script.Parent.changed)
+local create = require(script.Parent.create)
+local tags = require(script.Parent.tags)
+
+type Props = { [any]: any }
+
+local function jsx(tag: string | (Props) -> any, props: Props, ...): any
+    props = props or {}
+
+    if type(tag) == "string" then
+        tag = tags[tag] or tag
+
+        for key, value in props do
+            if type(key) ~= "string" then
+                continue
+            end
+
+            if string.match(key, "^changed:") then
+                local property = string.sub(key, 9)
+                table.insert(props, changed(property, value))
+                props[key] = nil
+            end
+        end
+
+        if props.ref then
+            table.insert(props, action(props.ref))
+            props.ref = nil
+        end
+
+        table.insert(props, { ... })
+
+        return create(tag)(props)
+    end
+
+    if select("#", ...) > 0 then
+        props.children = { ... }
+    end
+
+    return tag(props)
+end
+
+return jsx

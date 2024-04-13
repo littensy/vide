@@ -22,8 +22,10 @@ local indexes, values = require(script.maps)()
 local spring, update_springs = require(script.spring)()
 local action = require(script.action)()
 local changed = require(script.changed)
+local components = require(script.components)
 local throw = require(script.throw)
 local flags = require(script.flags)
+local jsx = require(script.jsx)
 
 export type Source<T> = source.Source<T>
 
@@ -89,7 +91,17 @@ local vide = {
             stepped = nil
         end
         step(dt)
-    end
+    end,
+
+    -- typescript
+    jsx = jsx,
+    match = switch,
+    Fragment = components.Fragment,
+    Switch = components.Switch,
+    Case = components.Case,
+    For = components.For,
+    Index = components.Index,
+    Show = components.Show,
 }
 
 setmetatable(vide :: any, {
