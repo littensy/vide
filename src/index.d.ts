@@ -57,11 +57,11 @@ declare namespace Vide {
 
 	function indexes<VI, VO>(input: () => readonly VI[], transform: (value: () => VI, index: number) => VO): () => VO[];
 
-	function indexes<K, VI, VO>(input: () => Table<K, VI>, transform: (value: () => VI, key: K) => VO): () => Map<K, VO>;
+	function indexes<K, VI, VO>(input: () => Table<K, VI>, transform: (value: () => VI, key: K) => VO): () => VO[];
 
 	function values<VI, VO>(input: () => readonly VI[], transform: (value: VI, index: () => number) => VO): () => VO[];
 
-	function values<K, VI, VO>(input: () => Table<K, VI>, transform: (value: VI, key: () => K) => VO): () => Map<K, VO>;
+	function values<K, VI, VO>(input: () => Table<K, VI>, transform: (value: VI, key: () => K) => VO): () => VO[];
 
 	function cleanup(destructor: Destructor): void;
 
@@ -116,16 +116,7 @@ declare namespace Vide {
 
 	// Elements
 
-	type Node =
-		| Instance
-		| InstanceAttributes<Instance>
-		| VideAction<any>
-		| FragmentNode
-		| FunctionNode
-		| string
-		| number
-		| boolean
-		| undefined;
+	type Node = Instance | InstanceAttributes<Instance> | VideAction<any> | FragmentNode | FunctionNode | undefined;
 
 	type LegacyNode<T extends Instance> =
 		| Instance
@@ -135,7 +126,11 @@ declare namespace Vide {
 		| FunctionNode
 		| undefined;
 
-	type FragmentNode = Map<any, Node> | ReadonlyMap<any, Node> | readonly Node[] | { readonly [key: Key]: Node };
+	type FragmentNode =
+		| Map<number, Node>
+		| ReadonlyMap<number, Node>
+		| readonly Node[]
+		| { readonly [key: number]: Node };
 
 	type FunctionNode = () => Node;
 
@@ -179,7 +174,8 @@ declare global {
 	namespace JSX {
 		type Element = Vide.Node;
 		type ElementType = string | ((props: any) => Element | void);
-		type IntrinsicAttributes = Vide.Attributes;
+
+		interface IntrinsicAttributes extends Vide.Attributes {}
 
 		interface ElementChildrenAttribute {
 			children: {};
