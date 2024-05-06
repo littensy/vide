@@ -150,9 +150,7 @@ declare namespace Vide {
 	type InferEnumNames<T> = T extends EnumItem ? T | T["Name"] : T;
 
 	type InstancePropertySources<T extends Instance> = {
-		[K in Exclude<keyof WritableInstanceProperties<T>, "Parent">]?: Derivable<
-			InferEnumNames<WritableInstanceProperties<T>[K]>
-		>;
+		[K in keyof WritableInstanceProperties<T>]?: Derivable<InferEnumNames<WritableInstanceProperties<T>[K]>>;
 	};
 
 	type InstanceEventCallbacks<T extends Instance> = {
