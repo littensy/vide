@@ -1,4 +1,3 @@
-type NoInfer<T> = intrinsic;
 type Destructor = () => void;
 type Key = string | number | symbol;
 type Table<K, V> = Map<K, V> | ReadonlyMap<K, V> | { readonly [P in Extract<K, Key>]: V };
@@ -51,7 +50,7 @@ declare namespace Vide {
 
 	function derive<T>(source: () => T): () => T;
 
-	// switch is a reserved keyword in TypeScript
+	// [FIXME] 'switch' is a reserved keyword in TypeScript
 	function match<T extends Key, U extends Node>(source: () => T): (map: { [P in T]?: () => U }) => () => U | undefined;
 
 	function show<T, U = undefined>(source: () => any, component: () => T, fallback?: () => U): () => T | U;
@@ -163,15 +162,16 @@ declare namespace Vide {
 	};
 
 	type InstanceChangedCallbacks<T extends Instance> = {
-		[K in `changed:${Extract<InstancePropertyNames<T>, string>}`]?: K extends `changed:${infer P extends Extract<InstancePropertyNames<T>, string>}`
+		[K in `${Extract<InstancePropertyNames<T>, string>}Changed`]?: K extends `${infer P extends Extract<InstancePropertyNames<T>, string>}Changed`
 			? (value: T[P]) => void
 			: never;
 	};
 
+	type InstanceEventAttributes<T extends Instance> = InstanceEventCallbacks<T> & InstanceChangedCallbacks<T>;
+
 	type InstanceAttributes<T extends Instance> = RefAttributes<T> &
 		InstancePropertySources<T> &
-		InstanceEventCallbacks<T> &
-		InstanceChangedCallbacks<T>;
+		InstanceEventAttributes<T>;
 
 	type LegacyInstanceProps<T extends Instance> = { [K in number]?: LegacyNode<T> } & InstancePropertySources<T> &
 		InstanceEventCallbacks<T>;
