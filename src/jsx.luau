@@ -17,7 +17,7 @@ local function jsx(tag: string | (Props) -> any, props: Props, ...): any
             end
 
             if string.match(key, ".Changed$") then
-                local property = string.sub(key, 9)
+                local property = string.sub(key, 1, -8)
                 table.insert(props, changed(property, value))
                 props[key] = nil
             end
