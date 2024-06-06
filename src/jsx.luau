@@ -23,9 +23,9 @@ local function jsx(tag: string | (Props) -> any, props: Props, ...): any
             end
         end
 
-        if props.ref then
-            table.insert(props, action(props.ref))
-            props.ref = nil
+        if props.action then
+            table.insert(props, action(props.action))
+            props.action = nil
         end
 
         table.insert(props, { ... })

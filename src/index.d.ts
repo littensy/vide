@@ -138,8 +138,8 @@ declare namespace Vide {
 		children?: Node;
 	}
 
-	interface RefAttributes<T> extends Attributes {
-		ref?: (instance: T) => void;
+	interface ActionAttributes<T> extends Attributes {
+		action?: (instance: T) => void;
 	}
 
 	type InferEnumNames<T> = T extends EnumItem ? T | T["Name"] : T;
@@ -162,7 +162,7 @@ declare namespace Vide {
 
 	type InstanceEventAttributes<T extends Instance> = InstanceEventCallbacks<T> & InstanceChangedCallbacks<T>;
 
-	type InstanceAttributes<T extends Instance> = RefAttributes<T> &
+	type InstanceAttributes<T extends Instance> = ActionAttributes<T> &
 		InstancePropertySources<T> &
 		InstanceEventAttributes<T>;
 

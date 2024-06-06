@@ -42,8 +42,9 @@ end
 Vide for roblox-ts brings JSX support to the library. As a result, this extension adds a set of components and utilities to improve usage.
 
 > [!TIP]
+>
 > - Vide JSX adds new components for syntax sugar, including `<Show>`, `<Switch>`/`<Case>`, `<For>`, and `<Index>`.
-> - Use the `ref` prop to create a Vide action that gets the reference of the rendered element.
+> - Use the `action` prop to create a Vide action that gets the reference of the rendered element.
 > - `switch` is a reserved keyword in TypeScript, so the `switch()` function is exposed under the alias `match()`.
 
 ### Installation
@@ -66,15 +67,15 @@ To use JSX with Vide, you need to configure the `jsx` option in your `tsconfig.j
 
 ```tsx
 function Counter() {
-    const count = source(0);
+	const count = source(0);
 
-    return (
-        <textbutton
-            Text={() => `count: ${count()}`}
-            TextChanged={(text) => print(text)}
-            Activated={() => count(count() + 1)}
-        />
-    );
+	return (
+		<textbutton
+			Text={() => `count: ${count()}`}
+			TextChanged={(text) => print(text)}
+			Activated={() => count(count() + 1)}
+		/>
+	);
 }
 ```
 
@@ -86,7 +87,9 @@ A conditional rendering component that accepts a boolean value and a function th
 const show = source(true);
 
 <Show when={show}>
-    {() => <textbutton Text="Hello, world!" />}
+	{() => {
+		return <textbutton Text="Hello, world!" />;
+	}}
 </Show>;
 ```
 
@@ -98,9 +101,9 @@ A conditional rendering component that accepts a value and a list of cases. Each
 const value = source("a");
 
 <Switch condition={value}>
-    <Case match="a">{() => <textbutton Text="A" />}</Case>
-    <Case match="b">{() => <textbutton Text="B" />}</Case>
-    <Case match="c">{() => <textbutton Text="C" />}</Case>
+	<Case match="a">{() => <textbutton Text="A" />}</Case>
+	<Case match="b">{() => <textbutton Text="B" />}</Case>
+	<Case match="c">{() => <textbutton Text="C" />}</Case>
 </Switch>;
 ```
 
@@ -114,7 +117,9 @@ If an entry is removed or changed, the corresponding node is updated or cleaned 
 const items = source(["a", "b", "c"]);
 
 <For each={items}>
-    {(item: string, index: () => number) => <textbutton Text={item} />}
+	{(item: string, index: () => number) => {
+		return <textbutton Text={item} />;
+	}}
 </For>;
 ```
 
@@ -128,6 +133,8 @@ If an entry is removed or changed, the corresponding node is updated or cleaned 
 const items = source(["a", "b", "c"]);
 
 <Index each={items}>
-    {(item: () => string, index: number) => <textbutton Text={() => item()} />}
+	{(item: () => string, index: number) => {
+		return <textbutton Text={() => item()} />;
+	}}
 </Index>;
 ```
