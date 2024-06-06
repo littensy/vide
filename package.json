@@ -1,6 +1,6 @@
 {
 	"name": "@rbxts/vide",
-	"version": "0.3.5",
+	"version": "0.4.0",
 	"description": "A reactive Luau library for creating UI",
 	"main": "src/init.lua",
 	"types": "src/index.d.ts",
