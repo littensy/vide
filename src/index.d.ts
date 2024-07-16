@@ -24,6 +24,15 @@ declare namespace Vide {
 
 	type Animatable = number | CFrame | Color3 | UDim | UDim2 | Vector2 | Vector3;
 
+	type Disposable =
+		| Destructor
+		| Instance
+		| RBXScriptConnection
+		| { disconnect: Callback }
+		| { destroy: Callback }
+		| { Disconnect: Callback }
+		| { Destroy: Callback };
+
 	let strict: boolean;
 
 	function root<T extends unknown[]>(fn: (destructor: Destructor) => LuaTuple<T>): LuaTuple<T>;
@@ -63,7 +72,7 @@ declare namespace Vide {
 
 	function values<K, VI, VO>(input: () => Table<K, VI>, transform: (value: VI, key: () => K) => VO): () => VO[];
 
-	function cleanup(destructor: Destructor): void;
+	function cleanup(value: Disposable): void;
 
 	function untrack<T>(source: Source<T>): T;
 
