@@ -23,13 +23,14 @@ local function root<T...>(fn: (destroy: () -> ()) -> T...): T...
 
     push_scope(node)
 
-    local result = { pcall(fn, destroy) }
+    local function efn(err: string) return debug.traceback(err, 3) end
+    local result = { xpcall(fn, efn, destroy) }
 
     pop_scope()
 
     if not result[1] then
         refs[node] = nil
-        throw(`mount error\n{result[2]}`)
+        throw(`error while running root():\n\n{result[2]}`)
     end
 
     return unpack(result :: any, 2)

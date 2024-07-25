@@ -218,8 +218,8 @@ TEST("graph", function()
         do
             local c = get_children(selected)
             CHECK(#c == 2)
-            CHECK(table.find(c, bind1))
-            CHECK(table.find(c, bind2))
+            CHECK(table.find(c, bind1 :: any))
+            CHECK(table.find(c, bind2 :: any))
         end
 
         do
@@ -2259,6 +2259,27 @@ TEST("strict", wrap_root(function()
 
         CHECK(count == 2)
         src(not src())
+        CHECK(count == 4)
+    end
+
+    do CASE "effect using derived source"
+        local input = source(true)
+
+        local output = derive(function()
+            return input()
+        end)
+
+        local count = 0
+
+        effect(function()
+            output()
+            count += 1
+        end)
+
+        CHECK(count == 2)
+
+        input(false)
+
         CHECK(count == 4)
     end
 end))
