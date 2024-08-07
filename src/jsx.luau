@@ -28,7 +28,10 @@ local function jsx(tag: string | (Props) -> any, props: Props, ...): any
             props.action = nil
         end
 
-        table.insert(props, { ... })
+        for index = 1, select("#", ...) do
+            local child = select(index, ...)
+            table.insert(props, child)
+        end
 
         return create(tag)(props)
     end
