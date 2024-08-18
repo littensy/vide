@@ -758,7 +758,6 @@ declare global {
 			lineforce: Vide.InstanceAttributes<LineForce>;
 			linehandleadornment: Vide.InstanceAttributes<LineHandleAdornment>;
 			localizationtable: Vide.InstanceAttributes<LocalizationTable>;
-			localscript: Vide.InstanceAttributes<LocalScript>;
 			markercurve: Vide.InstanceAttributes<MarkerCurve>;
 			materialvariant: Vide.InstanceAttributes<MaterialVariant>;
 			model: Vide.InstanceAttributes<Model>;
@@ -785,7 +784,6 @@ declare global {
 			ropeconstraint: Vide.InstanceAttributes<RopeConstraint>;
 			rotationcurve: Vide.InstanceAttributes<RotationCurve>;
 			screengui: Vide.InstanceAttributes<ScreenGui>;
-			script: Vide.InstanceAttributes<Script>;
 			scrollingframe: Vide.InstanceAttributes<ScrollingFrame>;
 			seat: Vide.InstanceAttributes<Seat>;
 			selectionbox: Vide.InstanceAttributes<SelectionBox>;
@@ -825,6 +823,7 @@ declare global {
 			trusspart: Vide.InstanceAttributes<TrussPart>;
 			uiaspectratioconstraint: Vide.InstanceAttributes<UIAspectRatioConstraint>;
 			uicorner: Vide.InstanceAttributes<UICorner>;
+			uidragdetector: Vide.InstanceAttributes<UIDragDetector>;
 			uiflexitem: Vide.InstanceAttributes<UIFlexItem>;
 			uigradient: Vide.InstanceAttributes<UIGradient>;
 			uigridlayout: Vide.InstanceAttributes<UIGridLayout>;
