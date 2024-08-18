@@ -36,8 +36,12 @@ local function jsx(tag: string | (Props) -> any, props: Props, ...): any
         return create(tag)(props)
     end
 
-    if select("#", ...) > 0 then
+    local count = select("#", ...)
+
+    if count > 1 then
         props.children = { ... }
+    elseif count == 1 then
+        props.children = ...
     end
 
     return tag(props)

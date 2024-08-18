@@ -4,7 +4,7 @@ local indexes, values = require(script.Parent.maps)()
 
 type Case = {
     match: any,
-    children: { () -> any },
+    children: () -> any,
 }
 
 local function Fragment(props: { children: any })
@@ -13,16 +13,16 @@ end
 
 local function For<K, VI, VO>(props: {
     each: () -> { [K]: VI },
-    children: { (VI, () -> K) -> VO },
+    children: (VI, () -> K) -> VO,
 }): () -> { VO }
-    return values(props.each, props.children[1])
+    return values(props.each, props.children)
 end
 
 local function Index<K, VI, VO>(props: {
     each: () -> { [K]: VI },
-    children: { (() -> VI, K) -> VO },
+    children: (() -> VI, K) -> VO,
 }): () -> { VO }
-    return indexes(props.each, props.children[1])
+    return indexes(props.each, props.children)
 end
 
 local function Switch(props: {
@@ -32,7 +32,7 @@ local function Switch(props: {
     local map = {}
 
     for _, node in props.children do
-        map[node.match] = node.children[1]
+        map[node.match] = node.children
     end
 
     return switch(props.condition)(map)
@@ -44,10 +44,10 @@ end
 
 local function Show(props: {
     when: any,
-    children: { () -> any },
+    children: () -> any,
     fallback: () -> any,
 })
-    return show(props.when, props.children[1], props.fallback)
+    return show(props.when, props.children, props.fallback)
 end
 
 return {
