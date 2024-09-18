@@ -427,12 +427,12 @@ declare namespace Vide {
 	 * @see https://centau.github.io/vide/api/reactivity-flow#values
 	 */
 	// overload for an array input
-	function For<VI, VO extends Node>(props: {
+	function For<VI, VO extends Node | void>(props: {
 		each: () => readonly VI[];
 		children: (item: VI, index: () => number) => VO;
 	}): () => VO[];
 	// overload for a map or object input
-	function For<K, VI, VO extends Node>(props: {
+	function For<K, VI, VO extends Node | void>(props: {
 		each: () => Table<K, VI>;
 		children: (value: VI, key: () => K) => VO;
 	}): () => VO[];
@@ -463,12 +463,12 @@ declare namespace Vide {
 	 * @see https://centau.github.io/vide/api/reactivity-flow#indexes
 	 */
 	// overload for an array input
-	function Index<VI, VO extends Node>(props: {
+	function Index<VI, VO extends Node | void>(props: {
 		each: () => readonly VI[];
 		children: (item: () => VI, index: number) => VO;
 	}): () => VO[];
 	// overload for a map or object input
-	function Index<K, VI, VO extends Node>(props: {
+	function Index<K, VI, VO extends Node | void>(props: {
 		each: () => Table<K, VI>;
 		children: (value: () => VI, key: K) => VO;
 	}): () => VO[];
@@ -509,7 +509,7 @@ declare namespace Vide {
 	 *
 	 * @see Switch
 	 */
-	function Case<T>(props: { match: T; children: () => Node }): Node;
+	function Case<T>(props: { match: T; children: () => Node | void }): Node;
 
 	/**
 	 * Shows one of two components depending on an input source. Renders the
@@ -531,7 +531,7 @@ declare namespace Vide {
 	 *
 	 * @see https://centau.github.io/vide/api/reactivity-flow#show
 	 */
-	function Show(props: { when: () => any; children: () => Node; fallback?: () => Node }): () => Node;
+	function Show(props: { when: () => any; children: () => Node | void; fallback?: () => Node | void }): () => Node;
 
 	// Elements
 
