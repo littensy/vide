@@ -892,7 +892,7 @@ TEST("create()", wrap_root(function()
     end
 
     do CASE "parent bound to source"
-        local wref, destroy = vide.root(function(destroy)
+        local _, wref, destroy = vide.root(function(destroy)
             local frame = create "Frame" { Name = "Parent" }
             local parent = source(frame :: Frame?)
 
@@ -1228,7 +1228,7 @@ TEST("indexes()", wrap_root(function()
 
         local count = table.create(3, 0)
 
-        local output = vide.root(function()
+        local _, output = vide.root(function()
             local output = indexes(input, function(v, i)
                 count[i] += 1
                 return v
@@ -1690,7 +1690,7 @@ TEST("untrack()", wrap_root(function()
 
         local input = source(0)
 
-        local output, destroy = root(function(destroy)
+        local _, output, destroy = root(function(destroy)
             local output = derive(function()
                 outer_count += 1
 
@@ -1820,7 +1820,7 @@ TEST("changed()", wrap_root(function()
     end
 
     do CASE "connection disconnected"
-        local text, destroy = root(function(destroy)
+        local _, text, destroy = root(function(destroy)
             local output = source(nil)
 
             return create "TextLabel" {
@@ -2155,6 +2155,108 @@ TEST("read()", wrap_root(function()
     end
 end))
 
+TEST("context()", function()
+    local root = vide.root
+    local context = vide.context
+    local effect = vide.effect
+    local untrack = vide.untrack
+    local show = vide.show
+
+    do CASE "set context"
+        local ctx = context()
+
+        root(function()
+            ctx(1, function()
+                CHECK(ctx() == 1)
+
+                effect(function()
+                    CHECK(ctx() == 1)
+                end)
+            end)
+        end)
+    end
+
+    do CASE "set context outside of scope"
+        local ctx = context()
+
+        local ok = pcall(function()
+            ctx(1, function() end)
+        end)
+        
+        CHECK(not ok)
+    end
+
+    do CASE "get default context"
+        local ctx = context(1)
+
+        CHECK(ctx() == 1)
+
+        root(function()
+            ctx(2, function()
+                CHECK(ctx() == 2)
+            end)
+
+            CHECK(ctx() == 1)
+        end)
+    end
+
+    do CASE "context cascade"
+        local ctx = context(1)
+        local ctx2 = context()
+
+        root(function()
+            ctx(2, function()
+                ctx2(true, function()
+                    show(function() return true end, function()
+                        ctx(3, function()
+                            effect(function()
+                                CHECK(ctx() == 3)
+                                untrack(function()
+                                    effect(function()
+                                        CHECK(ctx() == 3)
+                                    end)
+                                    CHECK(ctx2() == true)
+                                    return {}
+                                end)
+                            end)
+                            CHECK(ctx() == 3)
+                        end)
+                        CHECK(ctx() == 2)
+                        return {}
+                    end)
+                end)
+                CHECK(ctx() == 2)
+            end)
+
+            CHECK(ctx() == 1)
+        end)
+    end
+
+    do CASE "nil context"
+        local ctx = context(nil)
+
+        root(function()
+            CHECK(ctx() == nil)
+            ctx(nil, function()
+                CHECK(ctx() == nil)
+                ctx(true :: any, function()
+                    CHECK(ctx() == true)
+                    ctx(nil, function()
+                        effect(function()
+                            untrack(function()
+                                effect(function()
+                                    CHECK(ctx() == nil)
+                                end)
+                                return {}
+                            end)
+                        end)
+                    end)
+                end)
+            end)
+        end)
+    end
+end)
+
 TEST("nested effects cases", function()
     local vide = require "src/init"
     local source = vide.source
@@ -2295,7 +2397,7 @@ TEST("graph edge cases", wrap_root(function()
     do CASE "do not destroy children"
         local parent = source(0)   
 
-        local
+        local _,
             destroy,
             parent_to_destroy,
             update_parent_to_destroy
@@ -2338,7 +2440,7 @@ TEST("graph edge cases", wrap_root(function()
         -- child B reevaluates due to already being queued
         -- parent destroys, destroys child B - uh oh
 
-        local
+        local _,
             destroy_parent,
             parent,
             update_parent
@@ -2350,7 +2452,7 @@ TEST("graph edge cases", wrap_root(function()
                 src
         end)
 
-        local destroy_child, _child_B = function() end, nil
+        local _, destroy_child, _child_B = nil, function() end, nil
 
         local count_A = 0
     

@@ -1,6 +1,6 @@
 --------------------------------------------------------------------------------
 -- vide.luau
--- v0.2.0
+-- v0.3.0
 --------------------------------------------------------------------------------
 
 if not game then script = require "test/relative-string" end
@@ -16,6 +16,7 @@ local cleanup = require(script.cleanup)
 local untrack = require(script.untrack)
 local read = require(script.read)
 local batch = require(script.batch)
+local context = require(script.context)
 local switch = require(script.switch)
 local show = require(script.show)
 local indexes, values = require(script.maps)()
@@ -28,6 +29,9 @@ local flags = require(script.flags)
 local jsx = require(script.jsx)
 
 export type Source<T> = source.Source<T>
+export type source<T> = Source<T>
+export type Context<T> = context.Context<T>
+export type context<T> = Context<T>
 
 local function step(dt: number)
     if game then
@@ -65,6 +69,7 @@ local vide = {
     untrack = untrack,
     read = read,
     batch = batch,
+    context = context,
 
     -- animations
     spring = spring,

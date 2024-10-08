@@ -10,7 +10,7 @@ local destroy = graph.destroy
 
 local refs = {}
 
-local function root<T...>(fn: (destroy: () -> ()) -> T...): T...
+local function root<T...>(fn: (destroy: () -> ()) -> T...): (() -> (), T...)
     local node = create_node(false, false, false)
 
     refs[node] = true -- prevent gc of root node
@@ -29,11 +29,11 @@ local function root<T...>(fn: (destroy: () -> ()) -> T...): T...
     pop_scope()
 
     if not result[1] then
-        refs[node] = nil
+        destroy()
         throw(`error while running root():\n\n{result[2]}`)
     end
 
-    return unpack(result :: any, 2)
+    return destroy, unpack(result :: any, 2)
 end
 
-return root :: (<T...>(fn: (destroy: () -> ()) -> T...) -> T...) & ((fn: (destroy: () -> ()) -> ()) -> ())
+return root :: <T...>(fn: (destroy: () -> ()) -> T...) -> (() -> (), T...)
