@@ -5,6 +5,22 @@ local tags = require(script.Parent.tags)
 
 type Props = { [any]: any }
 
+local IGNORED_CHANGE_PROPS = {
+    AncestryChanged = true,
+    AttributeChanged = true,
+    AxisChanged = true,
+    ButtonChanged = true,
+    ControlPointChanged = true,
+    EmotesChanged = true,
+    HealthChanged = true,
+    InputChanged = true,
+    LightingChanged = true,
+    SelectionChanged = true,
+    StateChanged = true,
+    ThemeChanged = true,
+    ViewportChanged = true,
+}
+
 local function jsx(tag: string | (Props) -> any, props: Props, ...): any
     props = props or {}
 
@@ -12,12 +28,13 @@ local function jsx(tag: string | (Props) -> any, props: Props, ...): any
         tag = tags[tag] or tag
 
         for key, value in props do
-            if type(key) ~= "string" then
+            if type(key) ~= "string" or IGNORED_CHANGE_PROPS[key] then
                 continue
             end
 
-            if string.match(key, ".Changed$") then
-                local property = string.sub(key, 1, -8)
+            local property = string.match(key, "^(.+)Changed$")
+
+            if property then
                 table.insert(props, changed(property, value))
                 props[key] = nil
             end
