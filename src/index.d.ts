@@ -49,7 +49,7 @@ declare namespace Vide {
 	/**
 	 * A value that can be animated by Vide's spring system.
 	 */
-	type Animatable = number | CFrame | Color3 | UDim | UDim2 | Vector2 | Vector3;
+	type Animatable = number | CFrame | Color3 | UDim | UDim2 | Vector2 | Vector3 | Rect;
 
 	/**
 	 * Any destructible object that can be passed to `cleanup()`.
@@ -334,7 +334,7 @@ declare namespace Vide {
 	 *
 	 * @see https://centau.github.io/vide/api/animation#spring
 	 */
-	function spring<T>(source: () => T, period?: number, dampingRatio?: number): () => T;
+	function spring<T extends Animatable>(source: () => T, period?: number, dampingRatio?: number): Source<T>;
 
 	/**
 	 * Creates a callback that can be passed to `create()` to invoke custom
