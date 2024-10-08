@@ -15,10 +15,7 @@ declare namespace Vide {
 	 *
 	 * @returns The current value.
 	 */
-	interface Source<T> {
-		(value: T): T;
-		(): T;
-	}
+	type Source<T> = (value?: T) => T;
 
 	/**
 	 * A value that can be either a reactive source property or a static value.
@@ -97,9 +94,11 @@ declare namespace Vide {
 	 * @see https://centau.github.io/vide/api/reactivity-core#root
 	 */
 	// overload for a tuple return
-	function root<T extends unknown[]>(fn: (destructor: Destructor) => LuaTuple<T>): LuaTuple<T>;
-	// overload for a single retur
-	function root<T>(fn: (destructor: Destructor) => T): T;
+	function root<T extends unknown[]>(fn: (destroy: Destructor) => LuaTuple<T>): LuaTuple<[Destructor, ...T]>;
+	// overload for a single return
+	function root<T>(fn: (destroy: Destructor) => T): LuaTuple<[Destructor, T]>;
+	// overload for no return
+	function root(fn: (destroy: Destructor) => void): Destructor;
 
 	/**
 	 * Runs a function in a new stable scope and optionally applies its result
@@ -532,6 +531,38 @@ declare namespace Vide {
 	 * @see https://centau.github.io/vide/api/reactivity-flow#show
 	 */
 	function Show(props: { when: () => any; children: () => Node | void; fallback?: () => Node | void }): () => Node;
+
+	// Context
+
+	interface Context<T> {
+		(): T;
+		(value: T, component: () => void): void;
+	}
+
+	/**
+	 * Creates a new context that can be used to share state between components.
+	 *
+	 * @example
+	 * ```ts
+	 * const theme = context<string>();
+	 *
+	 * root(() => {
+	 *   theme("light", () => {
+	 *     print(theme()); // light
+	 *     theme("dark", () => {
+	 *       print(theme()); // dark
+	 *     });
+	 *   });
+	 * });
+	 * ```
+	 *
+	 * @template T The type of value to store in the context.
+	 *
+	 * @param defaultValue The default value to store in the context.
+	 *
+	 * @returns A new context function.
+	 */
+	function context<T>(defaultValue?: T): Context<T>;
 
 	// Elements
 
