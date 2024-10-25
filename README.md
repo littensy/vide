@@ -146,15 +146,15 @@ A component that renders its children with the `value` prop assigned to the cont
 `<Provider>` is syntax sugar for `context(value, () => children)`.
 
 > [!NOTE]
-> The context function must be called within the top-level of a component. Calling it within an effect or on a new thread will return the default value.
+> The context function must be called within the top-level of a component. Calling it within an effect or on a new thread may return the default value.
 
 ```tsx
 const theme = context("light");
 
 <Provider context={theme} value="dark">
 	{() => {
-		const currentTheme = context();
-		return <textbutton Text={currentTheme} />;
+		const value = theme();
+		return <textbutton Text={value} />;
 	}}
 </Provider>;
 ```
