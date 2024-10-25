@@ -536,24 +536,21 @@ declare namespace Vide {
 
 	interface Context<T> {
 		(): T;
-		(value: T, component: () => void): void;
+		<U extends Node | void>(value: T, component: () => U): U;
 	}
 
 	/**
 	 * Creates a new context that can be used to share state between components.
 	 *
 	 * @example
-	 * ```ts
-	 * const theme = context<string>();
+	 * ```tsx
+	 * const theme = context("light");
 	 *
-	 * root(() => {
-	 *   theme("light", () => {
-	 *     print(theme()); // light
-	 *     theme("dark", () => {
-	 *       print(theme()); // dark
-	 *     });
-	 *   });
-	 * });
+	 * <frame>
+	 *   {theme("dark", () => {
+	 *     return <textlabel Text={theme()} />;
+	 *   })}
+	 * </frame>
 	 * ```
 	 *
 	 * @template T The type of value to store in the context.
@@ -563,6 +560,31 @@ declare namespace Vide {
 	 * @returns A new context function.
 	 */
 	function context<T>(defaultValue?: T): Context<T>;
+
+	/**
+	 * Renders a component with a new value in the context. The value will be
+	 * passed to any components that read from the context within the component.
+	 *
+	 * **Note:** The context function must be called within the top-level of a
+	 * component. Calling it within an effect or on a new thread will return the
+	 * default value.
+	 *
+	 * @example
+	 * ```tsx
+	 * const theme = context("light");
+	 *
+	 * <Provider context={theme} value="dark">
+	 *   {() => <textlabel Text={theme()} />}
+	 * </Provider>
+	 * ```
+	 *
+	 * @param context The context to pass `children` to.
+	 * @param value The new value to store in the context.
+	 * @param children The component to render with the new context value.
+	 *
+	 * @returns The rendered component.
+	 */
+	function Provider<T>(props: { context: Context<T>; value: T; children: () => Node | void }): () => Node;
 
 	// Elements
 
