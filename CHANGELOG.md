@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 --------------------------------------------------------------------------------
 
+## [0.3.1] - 2024-10-09
+
+### Added
+
+- Context functions now also return results.
+- `version` table with current version.
+
+--------------------------------------------------------------------------------
+
 ## [0.3.0] - 2024-10-06
 
 ### Added
