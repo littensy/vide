@@ -109,6 +109,7 @@ local vide = {
     For = components.For,
     Index = components.Index,
     Show = components.Show,
+    Provider = components.Provider,
 }
 
 setmetatable(vide :: any, {

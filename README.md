@@ -43,8 +43,8 @@ Vide for roblox-ts brings JSX support to the library. As a result, this extensio
 
 > [!TIP]
 >
-> - Vide JSX adds new components for syntax sugar, including `<Show>`, `<Switch>`/`<Case>`, `<For>`, and `<Index>`.
-> - Use the `action` prop to create a Vide action that gets the reference of the rendered element.
+> - Vide JSX adds new components for syntax sugar, including `<Show>`, `<Switch>`/`<Case>`, `<For>`/`<Index>`, and `<Provider>`.
+> - Use the `action` prop to create a Vide action that receives the new instance as an argument.
 > - `switch` is a reserved keyword in TypeScript, so the `switch()` function is exposed under the alias `match()`.
 
 ### Installation
@@ -60,8 +60,8 @@ To use JSX with Vide, you need to configure the `jsx` option in your `tsconfig.j
 ```
 
 > [!NOTE]
-> Custom JSX factories are available in an unreleased version of roblox-ts.<br>
-> You can install it by running `npm install -D roblox-ts@next`.
+> Vide JSX requires roblox-ts version 3.0 or higher.
+> You can update roblox-ts by running `npm install -D roblox-ts@latest`.
 
 ### Code sample
 
@@ -137,4 +137,24 @@ const items = source(["a", "b", "c"]);
 		return <textbutton Text={() => item()} />;
 	}}
 </Index>;
+```
+
+### `<Provider>`
+
+A component that renders its children with the `value` prop assigned to the context. The value can be accessed by calling the `context` function while the `children` function is running.
+
+`<Provider>` is syntax sugar for `context(value, () => children)`.
+
+> [!NOTE]
+> The context function must be called within the top-level of a component. Calling it within an effect or on a new thread will return the default value.
+
+```tsx
+const theme = context("light");
+
+<Provider context={theme} value="dark">
+	{() => {
+		const currentTheme = context();
+		return <textbutton Text={currentTheme} />;
+	}}
+</Provider>;
 ```

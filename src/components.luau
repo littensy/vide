@@ -1,7 +1,10 @@
+local context = require(script.Parent.context)
 local show = require(script.Parent.show)
 local switch = require(script.Parent.switch)
 local indexes = require(script.Parent.indexes)
 local values = require(script.Parent.values)
+
+type Context<T> = context.Context<T>
 
 type Case = {
     match: any,
@@ -51,6 +54,14 @@ local function Show(props: {
     return show(props.when, props.children, props.fallback)
 end
 
+local function Provider<T>(props: {
+    context: Context<T>,
+    value: T,
+    children: () -> any,
+})
+    return props.context(props.value, props.children)
+end
+
 return {
     Fragment = Fragment,
     Switch = Switch,
@@ -58,4 +69,5 @@ return {
     For = For,
     Index = Index,
     Show = Show,
+    Provider = Provider,
 }
