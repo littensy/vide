@@ -33,10 +33,15 @@ local function Switch(props: {
     condition: () -> any,
     children: { Case },
 })
+    local children = props.children :: { [any]: any }
     local map = {}
 
-    for _, node in props.children do
-        map[node.match] = node.children
+    if children.match then
+        map[children.match] = children.children
+    else
+        for _, node in children do
+            map[node.match] = node.children
+        end
     end
 
     return switch(props.condition)(map)
