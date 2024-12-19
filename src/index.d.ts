@@ -1,6 +1,6 @@
 type Destructor = () => void;
 type Key = string | number | symbol;
-type Table<K, V> = Map<K, V> | ReadonlyMap<K, V> | { readonly [P in Extract<K, Key>]: V };
+type Table<K, V> = Map<K, V> | ReadonlyMap<K, V> | { readonly [P in K as Key]: V };
 
 export = Vide;
 export as namespace Vide;
