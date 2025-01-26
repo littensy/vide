@@ -1,6 +1,5 @@
 type Cleanup = () => void;
 type Key = string | number | symbol;
-type Table<K, V> = Map<K, V> | ReadonlyMap<K, V> | { readonly [P in K as Key]: V };
 
 export = Vide;
 export as namespace Vide;
@@ -268,9 +267,14 @@ declare namespace Vide {
 		input: () => readonly VI[],
 		component: (value: () => VI, index: number, show: () => boolean) => MaybeDelayed<VO>,
 	): () => VO[];
-	// overload for a map or object input
+	// overload for a map input
 	function indexes<K, VI, VO>(
-		input: () => Table<K, VI>,
+		input: () => Map<K, VI> | ReadonlyMap<K, VI>,
+		component: (value: () => VI, key: K, show: () => boolean) => MaybeDelayed<VO>,
+	): () => VO[];
+	// overload for an object input
+	function indexes<K extends Key, VI, VO>(
+		input: () => { readonly [P in K]: VI },
 		component: (value: () => VI, key: K, show: () => boolean) => MaybeDelayed<VO>,
 	): () => VO[];
 
@@ -302,9 +306,14 @@ declare namespace Vide {
 		input: () => readonly VI[],
 		component: (value: VI, index: () => number, show: () => boolean) => MaybeDelayed<VO>,
 	): () => VO[];
-	// overload for a map or object input
+	// overload for a map input
 	function values<K, VI, VO>(
-		input: () => Table<K, VI>,
+		input: () => Map<K, VI> | ReadonlyMap<K, VI>,
+		component: (value: VI, key: () => K, show: () => boolean) => MaybeDelayed<VO>,
+	): () => VO[];
+	// overload for an object input
+	function values<K extends Key, VI, VO>(
+		input: () => { readonly [P in K]: VI },
 		component: (value: VI, key: () => K, show: () => boolean) => MaybeDelayed<VO>,
 	): () => VO[];
 
@@ -467,10 +476,15 @@ declare namespace Vide {
 		each: () => readonly VI[];
 		children: (item: VI, index: () => number, show: () => boolean) => MaybeDelayed<VO>;
 	}): () => VO[];
-	// overload for a map or object input
+	// overload for a map input
 	function For<K, VI, VO extends Node | void>(props: {
-		each: () => Table<K, VI>;
-		children: (value: VI, key: () => K, show: () => boolean) => MaybeDelayed<VO>;
+		each: () => Map<K, VI> | ReadonlyMap<K, VI>;
+		children: (value: VI, key: () => K) => VO;
+	}): () => VO[];
+	// overload for an object input
+	function For<K extends Key, VI, VO extends Node | void>(props: {
+		each: () => { readonly [P in K]: VI };
+		children: (value: VI, key: () => K) => VO;
 	}): () => VO[];
 
 	/**
@@ -503,10 +517,15 @@ declare namespace Vide {
 		each: () => readonly VI[];
 		children: (item: () => VI, index: number, show: () => boolean) => MaybeDelayed<VO>;
 	}): () => VO[];
-	// overload for a map or object input
+	// overload for a map input
 	function Index<K, VI, VO extends Node | void>(props: {
-		each: () => Table<K, VI>;
-		children: (value: () => VI, key: K, show: () => boolean) => MaybeDelayed<VO>;
+		each: () => Map<K, VI> | ReadonlyMap<K, VI>;
+		children: (value: () => VI, key: K) => VO;
+	}): () => VO[];
+	// overload for an object input
+	function Index<K extends Key, VI, VO extends Node | void>(props: {
+		each: () => { readonly [P in K]: VI };
+		children: (value: () => VI, key: K) => VO;
 	}): () => VO[];
 
 	/**
