@@ -32,6 +32,8 @@ local function jsx(tag: string | (Props) -> any, props: Props, ...): any
     if type(tag) == "string" then
         tag = tags[tag] or tag
 
+        local actions = {}
+
         for key, value in props do
             if type(key) ~= "string" or IGNORED_CHANGE_PROPS[key] then
                 continue
@@ -40,9 +42,13 @@ local function jsx(tag: string | (Props) -> any, props: Props, ...): any
             local property = string.match(key, "^(.+)Changed$")
 
             if property then
-                table.insert(props, changed(property, value))
+                table.insert(actions, changed(property, value))
                 props[key] = nil
             end
+        end
+
+        for _, action in actions do
+            table.insert(props, action)
         end
 
         if props.action then
