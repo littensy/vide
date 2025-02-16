@@ -1,6 +1,7 @@
 local action = require(script.Parent.action)()
 local changed = require(script.Parent.changed)
 local create = require(script.Parent.create)
+local untrack = require(script.Parent.untrack)
 
 type Props = { [any]: any }
 
@@ -72,7 +73,9 @@ local function jsx(tag: string | (Props) -> any, props: Props, ...): any
         props.children = ...
     end
 
-    return tag(props)
+    return untrack(function()
+        return tag(props)
+    end)
 end
 
 return jsx
