@@ -68,7 +68,9 @@ local function jsx(tag: string | (Props) -> any, props: Props, ...): any
         props.children = ...
     end
 
-    return untrack(function() tag(props) end)
+    return untrack(function()
+        tag(props)
+    end)
 end
 
 return jsx
