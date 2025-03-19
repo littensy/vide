@@ -34,7 +34,7 @@ declare namespace Vide {
 	/**
 	 * Utility type for a component that accepts `children` as a prop.
 	 */
-	type PropsWithChildren<Props = {}> = Props & { children: Node };
+	type PropsWithChildren<Props = {}> = Props & { children?: Node };
 
 	/**
 	 * An object containing the custom logic to invoke when an instance is
