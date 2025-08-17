@@ -713,213 +713,212 @@ declare namespace Vide {
 		InstanceEventCallbacks<T>;
 }
 
-type SupportedInstances = [
-	"accessory",
-	"accessorydescription",
-	"accoutrement",
-	"actor",
-	"adgui",
-	"adportal",
-	"aircontroller",
-	"alignorientation",
-	"alignposition",
-	"angularvelocity",
-	"animation",
-	"animationconstraint",
-	"animationcontroller",
-	"animationrigdata",
-	"animator",
-	"archandles",
-	"atmosphere",
-	"attachment",
-	"audioanalyzer",
-	"audiochorus",
-	"audiocompressor",
-	"audiodeviceinput",
-	"audiodeviceoutput",
-	"audiodistortion",
-	"audioecho",
-	"audioemitter",
-	"audioequalizer",
-	"audiofader",
-	"audioflanger",
-	"audiolistener",
-	"audiopitchshifter",
-	"audioplayer",
-	"audioreverb",
-	"ballsocketconstraint",
-	"beam",
-	"billboardgui",
-	"blockmesh",
-	"bloomeffect",
-	"blureffect",
-	"bodyangularvelocity",
-	"bodycolors",
-	"bodyforce",
-	"bodygyro",
-	"bodyposition",
-	"bodythrust",
-	"bodyvelocity",
-	"bone",
-	"boolvalue",
-	"boxhandleadornment",
-	"brickcolorvalue",
-	"buoyancysensor",
-	"camera",
-	"canvasgroup",
-	"cframevalue",
-	"charactermesh",
-	"chorussoundeffect",
-	"clickdetector",
-	"climbcontroller",
-	"clouds",
-	"color3value",
-	"colorcorrectioneffect",
-	"compressorsoundeffect",
-	"conehandleadornment",
-	"configuration",
-	"controllermanager",
-	"controllerpartsensor",
-	"cornerwedgepart",
-	"curveanimation",
-	"cylinderhandleadornment",
-	"cylindermesh",
-	"cylindricalconstraint",
-	"decal",
-	"depthoffieldeffect",
-	"distortionsoundeffect",
-	"doubleconstrainedvalue",
-	"dragdetector",
-	"dragger",
-	"echosoundeffect",
-	"editableimage",
-	"editablemesh",
-	"equalizersoundeffect",
-	"eulerrotationcurve",
-	"facecontrols",
-	"fire",
-	"flangesoundeffect",
-	"floatcurve",
-	"floorwire",
-	"folder",
-	"forcefield",
-	"frame",
-	"groundcontroller",
-	"handles",
-	"highlight",
-	"hingeconstraint",
-	"hole",
-	"humanoid",
-	"humanoidcontroller",
-	"humanoiddescription",
-	"ikcontrol",
-	"imagebutton",
-	"imagehandleadornment",
-	"imagelabel",
-	"intconstrainedvalue",
-	"intvalue",
-	"keyframe",
-	"keyframemarker",
-	"keyframesequence",
-	"linearvelocity",
-	"lineforce",
-	"linehandleadornment",
-	"localizationtable",
-	"markercurve",
-	"materialvariant",
-	"model",
-	"motor",
-	"motor6d",
-	"nocollisionconstraint",
-	"numberpose",
-	"numbervalue",
-	"objectvalue",
-	"pants",
-	"part",
-	"particleemitter",
-	"pitchshiftsoundeffect",
-	"planeconstraint",
-	"pointlight",
-	"pose",
-	"prismaticconstraint",
-	"proximityprompt",
-	"rayvalue",
-	"reverbsoundeffect",
-	"rigidconstraint",
-	"rocketpropulsion",
-	"rodconstraint",
-	"ropeconstraint",
-	"rotationcurve",
-	"screengui",
-	"scrollingframe",
-	"seat",
-	"selectionbox",
-	"selectionsphere",
-	"shirt",
-	"shirtgraphic",
-	"sky",
-	"smoke",
-	"sound",
-	"soundgroup",
-	"sparkles",
-	"spawnlocation",
-	"specialmesh",
-	"spherehandleadornment",
-	"spotlight",
-	"springconstraint",
-	"stringvalue",
-	"stylederive",
-	"stylelink",
-	"stylerule",
-	"stylesheet",
-	"sunrayseffect",
-	"surfaceappearance",
-	"surfacegui",
-	"surfacelight",
-	"surfaceselection",
-	"swimcontroller",
-	"textbox",
-	"textbutton",
-	"textlabel",
-	"texture",
-	"tool",
-	"torque",
-	"torsionspringconstraint",
-	"trail",
-	"tremolosoundeffect",
-	"trusspart",
-	"uiaspectratioconstraint",
-	"uicorner",
-	"uidragdetector",
-	"uiflexitem",
-	"uigradient",
-	"uigridlayout",
-	"uilistlayout",
-	"uipadding",
-	"uipagelayout",
-	"uiscale",
-	"uisizeconstraint",
-	"uistroke",
-	"uitablelayout",
-	"uitextsizeconstraint",
-	"universalconstraint",
-	"vector3curve",
-	"vector3value",
-	"vectorforce",
-	"vehiclecontroller",
-	"vehicleseat",
-	"velocitymotor",
-	"videoframe",
-	"viewportframe",
-	"wedgepart",
-	"weld",
-	"weldconstraint",
-	"wire",
-	"wireframehandleadornment",
-	"worldmodel",
-	"wraplayer",
-	"wraptarget",
-]
+type SupportedInstances = 
+	| "accessory"
+	| "accessorydescription"
+	| "accoutrement"
+	| "actor"
+	| "adgui"
+	| "adportal"
+	| "aircontroller"
+	| "alignorientation"
+	| "alignposition"
+	| "angularvelocity"
+	| "animation"
+	| "animationconstraint"
+	| "animationcontroller"
+	| "animationrigdata"
+	| "animator"
+	| "archandles"
+	| "atmosphere"
+	| "attachment"
+	| "audioanalyzer"
+	| "audiochorus"
+	| "audiocompressor"
+	| "audiodeviceinput"
+	| "audiodeviceoutput"
+	| "audiodistortion"
+	| "audioecho"
+	| "audioemitter"
+	| "audioequalizer"
+	| "audiofader"
+	| "audioflanger"
+	| "audiolistener"
+	| "audiopitchshifter"
+	| "audioplayer"
+	| "audioreverb"
+	| "ballsocketconstraint"
+	| "beam"
+	| "billboardgui"
+	| "blockmesh"
+	| "bloomeffect"
+	| "blureffect"
+	| "bodyangularvelocity"
+	| "bodycolors"
+	| "bodyforce"
+	| "bodygyro"
+	| "bodyposition"
+	| "bodythrust"
+	| "bodyvelocity"
+	| "bone"
+	| "boolvalue"
+	| "boxhandleadornment"
+	| "brickcolorvalue"
+	| "buoyancysensor"
+	| "camera"
+	| "canvasgroup"
+	| "cframevalue"
+	| "charactermesh"
+	| "chorussoundeffect"
+	| "clickdetector"
+	| "climbcontroller"
+	| "clouds"
+	| "color3value"
+	| "colorcorrectioneffect"
+	| "compressorsoundeffect"
+	| "conehandleadornment"
+	| "configuration"
+	| "controllermanager"
+	| "controllerpartsensor"
+	| "cornerwedgepart"
+	| "curveanimation"
+	| "cylinderhandleadornment"
+	| "cylindermesh"
+	| "cylindricalconstraint"
+	| "decal"
+	| "depthoffieldeffect"
+	| "distortionsoundeffect"
+	| "doubleconstrainedvalue"
+	| "dragdetector"
+	| "dragger"
+	| "echosoundeffect"
+	| "editableimage"
+	| "editablemesh"
+	| "equalizersoundeffect"
+	| "eulerrotationcurve"
+	| "facecontrols"
+	| "fire"
+	| "flangesoundeffect"
+	| "floatcurve"
+	| "floorwire"
+	| "folder"
+	| "forcefield"
+	| "frame"
+	| "groundcontroller"
+	| "handles"
+	| "highlight"
+	| "hingeconstraint"
+	| "hole"
+	| "humanoid"
+	| "humanoidcontroller"
+	| "humanoiddescription"
+	| "ikcontrol"
+	| "imagebutton"
+	| "imagehandleadornment"
+	| "imagelabel"
+	| "intconstrainedvalue"
+	| "intvalue"
+	| "keyframe"
+	| "keyframemarker"
+	| "keyframesequence"
+	| "linearvelocity"
+	| "lineforce"
+	| "linehandleadornment"
+	| "localizationtable"
+	| "markercurve"
+	| "materialvariant"
+	| "model"
+	| "motor"
+	| "motor6d"
+	| "nocollisionconstraint"
+	| "numberpose"
+	| "numbervalue"
+	| "objectvalue"
+	| "pants"
+	| "part"
+	| "particleemitter"
+	| "pitchshiftsoundeffect"
+	| "planeconstraint"
+	| "pointlight"
+	| "pose"
+	| "prismaticconstraint"
+	| "proximityprompt"
+	| "rayvalue"
+	| "reverbsoundeffect"
+	| "rigidconstraint"
+	| "rocketpropulsion"
+	| "rodconstraint"
+	| "ropeconstraint"
+	| "rotationcurve"
+	| "screengui"
+	| "scrollingframe"
+	| "seat"
+	| "selectionbox"
+	| "selectionsphere"
+	| "shirt"
+	| "shirtgraphic"
+	| "sky"
+	| "smoke"
+	| "sound"
+	| "soundgroup"
+	| "sparkles"
+	| "spawnlocation"
+	| "specialmesh"
+	| "spherehandleadornment"
+	| "spotlight"
+	| "springconstraint"
+	| "stringvalue"
+	| "stylederive"
+	| "stylelink"
+	| "stylerule"
+	| "stylesheet"
+	| "sunrayseffect"
+	| "surfaceappearance"
+	| "surfacegui"
+	| "surfacelight"
+	| "surfaceselection"
+	| "swimcontroller"
+	| "textbox"
+	| "textbutton"
+	| "textlabel"
+	| "texture"
+	| "tool"
+	| "torque"
+	| "torsionspringconstraint"
+	| "trail"
+	| "tremolosoundeffect"
+	| "trusspart"
+	| "uiaspectratioconstraint"
+	| "uicorner"
+	| "uidragdetector"
+	| "uiflexitem"
+	| "uigradient"
+	| "uigridlayout"
+	| "uilistlayout"
+	| "uipadding"
+	| "uipagelayout"
+	| "uiscale"
+	| "uisizeconstraint"
+	| "uistroke"
+	| "uitablelayout"
+	| "uitextsizeconstraint"
+	| "universalconstraint"
+	| "vector3curve"
+	| "vector3value"
+	| "vectorforce"
+	| "vehiclecontroller"
+	| "vehicleseat"
+	| "velocitymotor"
+	| "videoframe"
+	| "viewportframe"
+	| "wedgepart"
+	| "weld"
+	| "weldconstraint"
+	| "wire"
+	| "wireframehandleadornment"
+	| "worldmodel"
+	| "wraplayer"
+	| "wraptarget"
 
 declare global {
 	namespace JSX {
@@ -933,7 +932,7 @@ declare global {
 		}
 
 		type IntrinsicElements = {
-			[K in keyof Instances as Lowercase<K> extends SupportedInstances[number] ? Lowercase<K> : K]: Instances[K] extends Instance ? Vide.InstanceAttributes<Instances[K]> : never
+			[K in keyof Instances as Lowercase<K> extends SupportedInstances ? Lowercase<K> : K]: Instances[K] extends Instance ? Vide.InstanceAttributes<Instances[K]> : never
 		}
 	}
 }
