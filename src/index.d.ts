@@ -725,7 +725,7 @@ declare global {
 		}
 
 		type IntrinsicElements = {
-			[K in keyof Instances as Lowercase<K>]: Instances[K] extends Instance ? Vide.InstanceAttributes<Instances[K]> : never
+			[K in keyof CreatableInstances as Lowercase<K>]: Vide.InstanceAttributes<Instances[K]>;
 		}
 	}
 }
