@@ -725,7 +725,7 @@ declare global {
 		}
 
 		type IntrinsicElements = {
-			[K in keyof CreatableInstances as Lowercase<K>]: Vide.InstanceAttributes<Instances[K]>;
+			[K in keyof CreatableInstances as Lowercase<K>]: Vide.InstanceAttributes<CreatableInstances[K]>;
 		}
 	}
 }
