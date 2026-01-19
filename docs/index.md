@@ -1,14 +1,16 @@
 ---
 # https://vitepress.dev/reference/default-theme-home-page
 layout: home
+pageClass: home
+next:
+  text: 'Introduction'
+  link: '/tut/crash-course/1-introduction'
 
 hero:
-  name: Vide
-  text: ""
+  name: "Vide"
   tagline: A reactive UI library for Luau.
   image:
     src: /logo.svg
-    alt: Vide
   actions:
     - theme: brand
       text: Tutorials
@@ -17,8 +19,4 @@ hero:
       text: API Reference
       link: /api/reactivity-core
 
-features:
-  - title: In Development
-    details: Not recommended for production use.
 ---
-

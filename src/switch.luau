@@ -1,64 +1,113 @@
-if not game then script = require "test/relative-string" end
+local branch = require "./branch"
+local source = require "./source"
+local effect = require "./effect"
+local timeout = require "./timeout" ()
 
-local throw = require(script.Parent.throw)
-local graph = require(script.Parent.graph)
-type Node<T> = graph.Node<T>
-type SourceNode<T> = graph.SourceNode<T>
-local create_node = graph.create_node
-local evaluate_node = graph.evaluate_node
-local push_child_to_scope = graph.push_child_to_scope
-local destroy = graph.destroy
-local assert_stable_scope = graph.assert_stable_scope
-local push_scope = graph.push_scope
-local pop_scope = graph.pop_scope
-
+type Array<T> = { T }
 type Map<K, V> = { [K]: V }
+type Source<T> = () -> T
+type Component<T> = (Source<boolean>) -> (T, ...number)
 
-local function switch<T, U>(source: () -> T): (map: Map<T, ((() -> U)?)>) -> () -> U?
-    local owner = assert_stable_scope()
+local function switch_map<K, Obj>(
+    input: Source<K>,
+    map: Map<K, Component<Obj>>
+): Source<nil | Obj | Array<Obj>>
+    local scopes = {} :: Map<K, {
+        destroy: () -> (),
+        object: Obj,
+        delay: number,
+        present: (boolean?) -> boolean,
+        timeout: { cancel: boolean }?
+    }>
 
+    local output = source(nil :: nil | Obj | Array<Obj>)
+    local function update_output()
+        local objects = {}
+
+        for _, scope in scopes do
+            table.insert(objects, scope.object)
+        end
+
+        output(
+            if objects[2] then objects
+            elseif objects[1] then objects[1]
+            else nil
+        )
+    end
+
+    effect(function()
+        local key: K? = input()
+
+        -- destroy (or queue destroy) all scopes not associated with the input key
+        for k, scope in scopes do
+            if k == key then continue end
+
+            scope.present(false)
+
+            if scope.delay == 0 then
+                scope.destroy()
+                scopes[k] = nil
+            else
+                if scope.timeout == nil then
+                    scope.timeout = timeout(scope.delay, function()
+                        scope.destroy()
+                        scopes[k] = nil
+                        update_output()
+                    end)
+                end
+            end
+        end
+
+        -- create new scope or abort destruction of existing scope if key exists
+        if key ~= nil then
+            local scope = scopes[key]
+
+            if scope then
+                scope.present(true)
+
+                if scope.timeout then
+                    scope.timeout.cancel = true
+                    scope.timeout = nil
+                end
+            else
+                local component = map[key]
+
+                if component ~= nil then
+                    if type(component) ~= "function" then
+                        error("map must map a value to a function", 0)
+                    end
+
+                    local present = source(false)
+
+                    local delay = nil :: number?
+                    local destroy, object = branch(function()
+                        local object, t = component(present)
+                        delay = t
+                        return object
+                    end)
+
+                    present(true)
+
+                    scopes[key] = {
+                        destroy = destroy,
+                        object = object,
+                        delay = delay or 0,
+                        present = present,
+                        timeout = nil
+                    }
+                end
+            end
+        end
+
+        update_output()
+    end)
+
+    return output
+end
+
+local function switch<K, Obj>(input: Source<K>): (map: Map<K, Component<Obj>>) -> Source<nil | Obj | Array<Obj>>
     return function(map)
-        local last_scope: Node<false>?
-        local last_component: (() -> U)?
-
-        local function update(cached): U?
-            local component = map[source()]
-            if component == last_component then return cached end
-            last_component = component
-
-            if last_scope then
-                destroy(last_scope :: Node<any>)
-                last_scope = nil
-            end
-
-            if component == nil then return nil end
-
-            if type(component) ~= "function" then
-                throw "map must map a value to a function"
-            end
-
-            local new_scope = create_node(owner, false, false)
-            last_scope = new_scope :: Node<any>
-            
-            push_scope(new_scope)
-        
-            local ok, result = pcall(component)
-
-            pop_scope()
-
-            if not ok then error(result, 0) end
-
-            return result
-        end
-
-        local node = create_node(owner, update, nil)
-
-        evaluate_node(node)
-
-        return function()
-            push_child_to_scope(node)
-            return node.cache
-        end
+        return switch_map(input, map)
     end
 end
 

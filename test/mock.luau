@@ -86,12 +86,28 @@ local Instance = {} :: any do
     local proxies = {} :: { [Data]: userdata? }
     setmetatable(proxies :: any, { __mode = "v" })
 
+    -- allocate variables for the metamethods as __index and get_proxy cross refrences each other
+    local __index, __newindex
+
     local function get_data(userdata: userdata): Data
         local function f(userdata: userdata): ProxyMT
             return getmetatable(userdata :: any)
         end
 
         return f(userdata).data
+    end
+
+    local function get_proxy(data: Data): userdata
+        return proxies[data] or (function()
+            local userdata = newproxy(true)
+            local proxy = getmetatable(userdata)
+            proxy.proxy = userdata
+            proxy.data = data
+            proxy.__index = __index
+            proxy.__newindex = __newindex
+            proxies[data] = userdata   
+            return userdata
+        end)()
     end
 
     local function is_instance(value: unknown): boolean
@@ -101,16 +117,16 @@ local Instance = {} :: any do
 
     local methods = {}
 
-    local function __index(userdata: userdata, property: string): ()
+    __index = function(userdata: userdata, property: string): ()
         local data = get_data(userdata)
         return if methods[property] then methods[property]
             elseif property == "Name" then data.name
-            elseif property == "Parent" then data.parent
+            elseif property == "Parent" then (data.parent and get_proxy(data.parent))
             elseif property == "Destroying" then data.destroying
             else data.properties[property] 
     end
 
-    local function __newindex(userdata: userdata, property: string, value: unknown)
+    __newindex = function(userdata: userdata, property: string, value: unknown)
         local data = get_data(userdata)
         if property == "Name" then
             if type(value) ~= "string" then error("name must be a string", 2) end
@@ -133,19 +149,6 @@ local Instance = {} :: any do
         if data.changed[property] then
             Signal.fire(data.changed[property])
         end
-    end
-
-    local function get_proxy(data: Data): userdata
-        return proxies[data] or (function()
-            local userdata = newproxy(true)
-            local proxy = getmetatable(userdata)
-            proxy.proxy = userdata
-            proxy.data = data
-            proxy.__index = __index
-            proxy.__newindex = __newindex
-            proxies[data] = userdata   
-            return userdata
-        end)()
     end
 
     function Instance.new(class: string): Instance
@@ -257,40 +260,6 @@ local Vector2 = { __type = "Vector2" } :: any do
     end
 end
 
-local Vector3 = { __type = "Vector3" } :: any do
-    local function new(x, y, z)
-        return setmetatable({ X = x, Y = y, Z = z }, Vector3)
-    end
-
-    function Vector3.new(x, y, z)
-        return new(x or 0, y or 0, z or 0)
-    end
-
-    function Vector3.__add(a, b)
-        return new(a.X + b.X, a.Y + b.Y, a.Z + b.Z)
-    end
-
-    function Vector3.__sub(a, b)
-        return new(a.X - b.X, a.Y - b.Y, a.Z - b.Z)
-    end
-
-    function Vector3.__mul(a, b)
-        return new(a.X * b, a.Y * b, a.Z * b)
-    end
-
-    function Vector3.__unm(v)
-        return new(-v.X, -v.Y, -v.Z)
-    end
-
-    function Vector3.__eq(a, b)
-        return a.X == b.X and a.Y == b.Y
-    end
-
-    function Vector3.__index(v)
-        return (v.X^2 + v.Y^2 + v.Z^2)^0.5
-    end
-end
-
 local UDim2 = { __type = "UDim2" } :: any do
     function UDim2.new(sx, ox, sy, oy)
         return table_to_proxy(setmetatable({ x = { scale = sx, offset = ox }, y = { scale = sy, offset = oy } }, UDim2))
@@ -330,7 +299,6 @@ return {
     Instance = Instance :: typeof(Instance),
     Color3 = Color3 :: typeof(Color3),
     Vector2 = Vector2 :: typeof(Vector2),
-    Vector3 = Vector3 :: typeof(Vector3),
     UDim2 = UDim2 :: typeof(UDim2),
     Enum = Enum :: typeof(Enum),
     typeof = typeof :: typeof(typeof)

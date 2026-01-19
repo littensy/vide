@@ -10,7 +10,7 @@ Stores a single value that can be updated.
 
 Created with `source()`.
 
-# Derived Source
+## Derived Source
 
 A new source composed of other sources.
 
@@ -30,7 +30,7 @@ Created by:
 
 - `root()`
 - `untrack()`
-- `switch()`
+- `show()`
 - `indexes()`
   
 Stable scopes do not track sources and never rerun.
@@ -46,24 +46,15 @@ Created by:
 
 Reactive scopes do track sources and will rerun when those sources update.
 
-New reactive scopes cannot be created within a reactive scope, but stable scopes
-can.
+Reactive scopes cannot be created within a reactive scope, but stable scopes
+can be created within a reactive scope.
 
-## Scope Owners
+## Scope Cleanup
 
-A scope created within another scope is *owned* by the other scope, with the
-exception of the scope created by `root()`.
+When a scope is rerun or destroyed, all scopes created within it are
+automatically destroyed.
 
-When a scope is rerun or destroyed, all scopes owned by it are automatically
-destroyed.
-
-`root()` creates a stable scope with no owner, instead it is destroyed manually.
-
-## Cleanup
-
-Arbitrary code to run whenever a stable or reactive scope is rerun or destroyed.
-
-Queue a function to run using `cleanup()`.
+Any functions queued by `cleanup()` are also ran.
 
 ## Reactive Graph
 
@@ -73,12 +64,12 @@ relationships between effects and the sources they depend on.
 
 ### Code
 
-```lua
+```luau
 local count = source(0)
 
 root(function()
     local text = derive(function()
-        return "count: " .. text()
+        return "count: " .. count()
     end)
 
     effect(function()
@@ -93,12 +84,12 @@ end)
 %%{init: {
     "theme": "base",
     "themeVariables": {
-        "primaryColor": "#1B1B1F",
+        "primaryColor": "#111720",
         "primaryTextColor": "#fff",
-        "primaryBorderColor": "#1B1B1F",
+        "primaryBorderColor": "#111720",
         "lineColor": "#79B8FF",
-        "tertiaryColor": "#161618",
-        "tertiaryBorderColor": "#1C1C1F"
+        "tertiaryColor": "#0d131b",
+        "tertiaryBorderColor": "#202530"
     }
 }}%%
 
@@ -118,6 +109,5 @@ Notes:
 - An update to `count` will cause `text` to rerun, which
   then causes `effect` to rerun.
 - When the root scope is destroyed, `text` and
-  `effect` will be destroyed alongside it, since they are
-  owned by it. `count` will be untouched and future updates
-  to `count` will have no effect.
+  `effect` will be destroyed alongside it, since they were created within it.
+  `count` will be untouched and future updates to `count` will have no effect.

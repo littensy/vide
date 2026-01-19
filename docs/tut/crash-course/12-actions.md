@@ -1,13 +1,11 @@
 # Actions
 
-Actions in Vide are special callbacks that you can pass along with properties,
+Actions are special callbacks that you can pass along with properties,
 to run some code on an instance receiving them.
 
-```lua
+```luau
 local action = vide.action
-```
 
-```lua
 create "TextLabel" {
     Text = "test",
 
@@ -22,14 +20,15 @@ create "TextLabel" {
 Actions can be wrapped with functions for reuse. Below is an example of an
 action used to listen for property changes:
 
-```lua
+```luau
 local action = vide.action
+local source = vide.source
 local effect = vide.effect
 local cleanup = vide.cleanup
 
-local function changed(prop: string, callback: (new) -> ())
+local function changed(property: string, callback: (new) -> ())
     return action(function(instance)
-        local connection = instance:GetPropertyChangedSignal(prop):Connect(function()
+        local connection = instance:GetPropertyChangedSignal(property):Connect(function()
             callback(instance[property])
         end)
 
@@ -49,7 +48,7 @@ effect(function()
     print(output())
 end)
 
-instance.Text = "foo" -- "foo" will be printed from the effect
+instance.Text = "foo" -- "foo" will be printed by the effect
 ```
 
 The source `output` will be updated with the new property value any time it is

@@ -6,11 +6,64 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 --------------------------------------------------------------------------------
 
-## Unreleased
+## [0.4.0] - 2026-01-17
+
+### Added
+
+- `create("ClassName", { props })` and `create(Instance, { props })` syntax.
+- `cleanup()` now accepts `thread` types.
+- Implicit effects to set children can now recursively create more implicit
+  effects to set children.
+- `spring()` returns a second value, a setter to set position, velocity and
+  impulse.
+- Improved `spring()` updating and unscheduling.
+- `show()` now receives a source to its callback returning the current value
+  of the condition.
+- Ignore `false` passed as a child.
+- Flag `vide.defaults` to disable the setting of default properties.
+- Delayed scope destruction for control flow functions: `show()` `switch()` `indexes()` `values()`.
+- Better `create()` types for the new type solver.
+
+### Changed
+
+- A scope can no longer be destroyed while it is active. Strict mode will check
+  for this.
+- Implicit effects to set children now unparent all children when the effect is
+  destroyed.
+- Error reporting should be improved with better formatting when effects invoke
+  other effects and no more loss of stack traces.
+- Nesting parent properties now work, and they are now also checked for
+  duplicates like other properties.
+
+### Removed
+
+- Aggregate construction when setting properties with `create()`.
+
+--------------------------------------------------------------------------------
+
+## [0.3.1] - 2024-10-09
+
+### Added
+
+- Context functions now also return results.
+- `version` table with current version.
+
+--------------------------------------------------------------------------------
+
+## [0.3.0] - 2024-10-06
+
+### Added
+
+- `context()`.
+
+### Changed
+
+- `root()` now returns its destructor as the first value by default.
 
 ### Fixed
 
 - Error stack traces being lost.
+- `root()` now destroys the scope automatically if an error occurs during call.
 
 --------------------------------------------------------------------------------
 

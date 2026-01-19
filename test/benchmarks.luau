@@ -1,14 +1,17 @@
-local testkit = require("test/testkit")
+local testkit = require("./testkit")
 local BENCH, START = testkit.benchmark()
 
-local vide = require "src/init"
+local vide = require "../../vide"
 local source = vide.source
 local derive = vide.derive
+local effect = vide.effect
 local indexes = vide.indexes
 local values = vide.values
 local batch = vide.batch
 local cleanup = vide.cleanup
+local untrack = vide.untrack
 local create = vide.create
+local context = vide.context
 
 assert(not vide.strict)
 
@@ -24,7 +27,7 @@ local function ROOT_BENCH(name: string, fn: () -> ())
     end)()
 end
 
-local N = 2^18 -- 262144
+local N = 2^20
 
 TITLE "sources"
 
@@ -197,7 +200,7 @@ end)
 TITLE "property apply"
 
 ROOT_BENCH("apply 0 properties", function()
-    local apply = require "src/apply"
+    local apply = require "../src/apply"
     local instance = create("Frame") {}
 
     for i = 1, START(N) do
@@ -206,7 +209,7 @@ ROOT_BENCH("apply 0 properties", function()
 end)
 
 ROOT_BENCH("apply 8 properties", function()
-    local apply = require "src/apply"
+    local apply = require "../src/apply"
     local instance = create("Frame") {}
 
     for i = 1, START(N) do
@@ -224,7 +227,7 @@ ROOT_BENCH("apply 8 properties", function()
 end)
 
 ROOT_BENCH("bind property", function()
-    local apply = require "src/apply"
+    local apply = require "../src/apply"
 
     local instance = create("Frame") {}
     local src = source(1)
@@ -239,7 +242,7 @@ ROOT_BENCH("bind property", function()
 end)
 
 ROOT_BENCH("update binding", function()
-    local apply = require "src/apply"
+    local apply = require "../src/apply"
 
     local instance = create("Frame") {}
     local src = source(1)
@@ -446,85 +449,99 @@ ROOT_BENCH("values() all remove", function()
     src(data)
 end)
 
-N *= 1024
+TITLE "context()"
 
-TITLE "aggregate"
+ROOT_BENCH("set context", function()
+    local ctx = context()
 
-do
-    -- the purpose of the two following benchmarks is to measure the overhead of
-    -- aggregate construction
-    ROOT_BENCH("set explicit mock vector2", function()
-        local apply = require "src/apply"
-        local Vector2 = require "test/mock".Vector2
+    for i = 1, START(N) do
+        ctx(i, function() end)
+    end
+end)
 
-        local label = create "TextLabel" {
-            AnchorPoint = Vector2.new(1, 1)
-        }
+ROOT_BENCH("get context (depth=1)", function()
+    local ctx = context()
 
+    local function run()
         for i = 1, START(N) do
-            apply(label, {
-                AnchorPoint = Vector2.new(i, i)
-            })
+            ctx()
         end
+    end
+
+    ctx(1, function()
+        run()
     end)
+end)
 
-    ROOT_BENCH("set aggregate mock vector2", function()
-        local apply = require "src/apply"
-        local Vector2 = require "test/mock".Vector2
+local depth = 10
+ROOT_BENCH(`get context (depth={depth})`, function()
 
-        local label = create "TextLabel" {
-            AnchorPoint = Vector2.new(1, 1)
-        }
+    local ctx = context()
 
+    local function run()
         for i = 1, START(N) do
-            apply(label, {
-                AnchorPoint = { i, i }
-            })
+            ctx()
         end
+    end
+
+    local function nest_effect(fn)
+        untrack(function()
+            effect(fn)
+            return nil
+        end)
+    end
+    
+    local f = run
+    for i = 1, depth - 1 do
+        local f_inner = f
+        f = function()
+            nest_effect(f_inner)
+        end
+    end
+
+    ctx(1, function()
+        f()
     end)
-end
+end)
 
--- innacurate due to no Vector3 in vanilla Luau
--- mock vector is 200x slower than native vector 
+TITLE "spring()"
 
--- ROOT_BENCH("spring update", function()
---     local root, source, spring = vide.root, vide.source, vide.spring
+ROOT_BENCH("spring update", function()
+    local root, source, spring = vide.root, vide.source, vide.spring
 
---     local src = source(0)
+    local src = source(0)
 
---     root(function()
---         for i = 1, N do
---             spring(src)
---         end
+    root(function()
+        for i = 1, N do
+            spring(src)
+        end
 
---         START(N)
+        START(N)
 
---         src(1)
+        src(1)
 
---         return nil
---     end)
--- end)
+        return nil
+    end)
+end)
 
--- N /= 1024
+ROOT_BENCH("spring step", function()
+    local root, source, spring = vide.root, vide.source, vide.spring
 
--- ROOT_BENCH("spring step", function()
---     local root, source, spring = vide.root, vide.source, vide.spring
+    local src = source(0)
 
---     local src = source(0)
+    root(function()
+        for i = 1, N do
+            spring(src)
+        end
 
---     root(function()
---         for i = 1, N do
---             spring(src)
---         end
+        src(1)
 
---         src(1)
+        START(N)
 
---         START(N)
+        vide.step(1/60)
 
---         vide.step(1/60)
-
---         return nil
---     end)
--- end)
+        return nil
+    end)
+end)
 
 return nil

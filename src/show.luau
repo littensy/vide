@@ -1,18 +1,36 @@
-if not game then script = require "test/relative-string" end
+local source = require "./source"
+local derive = require "./derive"
+local effect = require "./effect"
+local untrack = require "./untrack"
+local switch = require "./switch"
 
-local switch = require(script.Parent.switch)
+type Array<T> = { T }
+type Source<T> = () -> T
 
-local function show<T>(source: () -> any, component: () -> T, fallback: (() -> T)?): () -> T?
-    local function truthy()
-        return not not source()
-    end
+local function show<T, Obj>(
+    input: Source<T?>,
+    component: (Source<T>, Source<boolean>) -> (Obj, ...number),
+    fallback: ((Source<boolean>) -> (Obj, ...number))?
+): Source<nil | Obj | Array<Obj>>
+    local filtered_input = source()
 
-    return switch(truthy) {
-        [true] = component,
-        [false] = fallback,
+    effect(function()
+        local v = input() 
+        if v then
+            filtered_input(v)
+        end
+    end)
+
+    local input_is_truthy = derive(function()
+        return not not input()
+    end)
+
+    return switch(input_is_truthy) {
+        [true] = function(present)
+            return component(filtered_input, present)
+        end,
+        [false] = fallback
     }
 end
 
-return show ::
-    (<T>(source: () -> any, component: () -> T) -> () -> T?) &
-    (<T, U>(source: () -> any, component: () -> T, fallback: () -> U) -> () -> (T | U)?)
+return show
