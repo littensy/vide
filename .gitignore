@@ -1,5 +1,11 @@
 .vscode
 _local
+.DS_Store
+
+node_modules
+out
+src/test.tsx
+*.tgz
 
 sourcemap.json
 
