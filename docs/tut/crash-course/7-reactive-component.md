@@ -1,11 +1,9 @@
-# Stateful Components
+# Reactive Components
 
-Stateful components in Vide are created using sources and effects - sources to
+Reactive components in Vide are created using sources and effects - sources to
 store the data, and effects to display the data.
 
-## Internal State
-
-```lua
+```luau
 local create = vide.create
 local source = vide.source
 local effect = vide.effect
@@ -33,19 +31,13 @@ its internal count, and automatically update its text to reflect that count.
 Each instance of `Counter()` will maintain its own independent count, since the
 count source is created inside the component.
 
-## External State
-
 External sources can also be passed into components for them to use.
 
-```lua
-local function Counter(props: { count: () -> number })
+```luau
+local function CountDisplay(props: { count: () -> number })
     local count = props.count
 
-    local instance = create "TextButton" {
-        Activated = function()
-            count(count() + 1)
-        end
-    }
+    local instance = create "TextLabel" {}
 
     effect(function()
         instance.Text = "count: " .. count()
@@ -56,11 +48,11 @@ end
 
 local count = source(0)
 
-Counter {
+CountDisplay {
     count = count
 }
 
-count(1) -- the Counter component will update to display this count
+count(1) -- the CountDisplay component will update to display this count
 ```
 
 Sources can be created internally or passed in from externally, there are no

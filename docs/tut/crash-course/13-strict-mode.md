@@ -13,7 +13,7 @@ Strict mode will run derived sources and effects twice each time they update.
 This is to help ensure that derived source computations are pure, and that any
 cleanups made in derived sources or effects are done properly.
 
-```lua
+```luau
 local source = vide.source
 local effect = vide.effect
 
@@ -23,6 +23,7 @@ local count = source(0)
 
 local ran = 0
 effect(function()
+    count()
     ran += 1
 end)
 

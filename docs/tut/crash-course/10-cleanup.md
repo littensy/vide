@@ -5,13 +5,13 @@ a side-effect from a source update. Vide provides a function `cleanup()` which
 is used to queue a callback for the next time a reactive scope is rerun or
 destroyed, or when a stable scope is destroyed.
 
-```lua
+```luau
 local root = vide.root
 local source = vide.source
 local effect = vide.effect
+local cleanup = vide.cleanup
 
 local count = source(0)
-
 
 local destroy = root(function()
     effect(function()

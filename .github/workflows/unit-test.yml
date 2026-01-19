@@ -8,13 +8,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Install Luau zip
-        uses: robinraju/release-downloader@v1.6
+        uses: robinraju/release-downloader@v1.9
         with: 
           repository: Roblox/luau
-          tag: "0.620"
+          tag: "0.679"
           fileName: luau-ubuntu.zip
           out-file-path: bin
 

@@ -1,41 +1,47 @@
-# Reactivity API: Utility
+# Reactivity: Utility
 
 ## cleanup()
 
-Runs a callback anytime a scope is reran or destroyed.
+Queues a callback to run when a scope is reran or destroyed.
 
 - **Type**
 
-    ```lua
-    function cleanup(callback: () -> ())
-    function cleanup(obj: Destroyable)
-    function cleanup(obj: Disconnectable)
+    ```luau
+    function cleanup(v: Function | Disconnectable | Destroyable | thread)
 
+    type Function = () -> ()
     type Destroyable = { destroy: () -> () }
     type Disconnectable = { disconnect: () -> () }
     ```
 
 - **Example**
 
-    ```lua
-    local data = source(1)
+    ```luau
+    local count = source(0)
 
-    effect(function()
-        local label = create "TextLabel" { Text = data() }
+    local destroy = root(function()
+        effect(function()
+            count()
 
-        cleanup(function()
-            label:Destroy()
+            cleanup(function()
+                print "cleaned"
+            end)
         end)
-    end)
+    end
+
+    -- nothing printed yet
+    count(1) -- prints "cleaned"
+    count(2) -- prints "cleaned"
+    destroy() -- prints "cleaned"
     ```
 
-## untrack()
+## untrack() <Badge type="info" text="STABLE"><a href="/vide/api/reactivity-core#Scopes">STABLE</a></Badge>
 
-Runs a given function in a new stable scope.
+Runs a function in a new stable scope.
 
 - **Type**
 
-    ```lua
+    ```luau
     function untrack<T>(source: () -> T): T
     ```
 
@@ -46,7 +52,7 @@ Runs a given function in a new stable scope.
 
 - **Example**
 
-    ```lua
+    ```luau
     local a = source(0)
     local b = source(0)
 
@@ -55,65 +61,84 @@ Runs a given function in a new stable scope.
     end)
 
     print(sum()) -- 0
-    b(1)
+    b(1) -- untracked so reactive scope created by derive() does not rerun
     print(sum()) -- 0
-    a(1)
+    a(1) -- reactive scope created by derive() reruns
     print(sum()) -- 2
     ```
 
 ## read()
 
-Utility used to read a value that is either a primitive or a source. Sources
-read can still be tracked inside a reactive scope.
+Utility used to read a value that is either a primitive or a source.
 
 - **Type**
 
-    ```lua
+    ```luau
     function read<T>(value: T | () -> T): T
     ```
 
 ## batch()
 
-Runs a given function where any source updates made within the function do not
-trigger effects until after the function finishes running.
+Runs a function where any source updates made within the function do not
+trigger effects until after the function ends.
 
 - **Type**
 
-    ```lua
+    ```luau
     function batch(fn: () -> ())
     ```
 
 - **Details**
 
     Improves performance when an effect depends on multiple sources, and those
-    sources need to be updated. Updating those sources inside a batch call will
-    only cause the effect to run once after the batch call ends instead of after
-    each time a source is updated.
+    sources need to be updated.
 
-## context()
+- **Example**
+
+    ```luau
+    local a = source(0)
+    local b = source(0)
+
+    effect(function()
+        print(a() + b())
+    end)
+
+    -- prints "0"
+
+    batch(function()
+        a(1) -- no print
+        b(2) -- no print
+    end)
+
+    -- prints "3"
+    ```
+
+## context() <Badge type="info" text="STABLE"><a href="/vide/api/reactivity-core#Scopes">STABLE</a></Badge>
 
 Creates a new context.
 
 - **Type**
 
-    ```lua
+    ```luau
     function context<T>(default: T): Context<T>
 
     type Context<T> =
         () -> T -- get
-        & (T, () -> ()) -> () -- set
+        & <U>(T, () -> U) -> U -- set
     ```
 
 - **Details**
 
     Calling `context()` returns a new context function.
     Call this function with no arguments to get the context value.
-    Call this function with a value and a callback to set a new context with the
-    given value.
+    Call this function with a value and a function to create a new context with
+    the given value.
+
+    The new context is run under a stable scope.
 
 - **Example**
 
-    ```lua
+    ```luau
     local theme = context()
 
     local function Button()
@@ -131,4 +156,3 @@ Creates a new context.
     end)
     ```
 
---------------------------------------------------------------------------------
