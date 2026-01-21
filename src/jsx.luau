@@ -1,7 +1,6 @@
 local action = require(script.Parent.action)()
 local changed = require(script.Parent.changed)
 local create = require(script.Parent.create)
-local tags = require(script.Parent.tags)
 
 type Props = { [any]: any }
 
@@ -20,6 +19,12 @@ local IGNORED_CHANGE_PROPS = {
     ThemeChanged = true,
     ViewportChanged = true,
 }
+
+local tags = {}
+
+for _, class in game:GetService("ReflectionService"):GetClasses() do
+	tags[string.lower(class.Name)] = class.Name
+end
 
 local function jsx(tag: string | (Props) -> any, props: Props, ...): any
     props = props or {}

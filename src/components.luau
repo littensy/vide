@@ -1,6 +1,7 @@
 local show = require(script.Parent.show)
 local switch = require(script.Parent.switch)
-local indexes, values = require(script.Parent.maps)()
+local indexes = require(script.Parent.indexes)
+local values = require(script.Parent.values)
 
 type Case = {
     match: any,

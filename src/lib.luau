@@ -22,6 +22,8 @@ local action = require "./action"()
 local changed = require "./changed"
 local timeout, update_timeouts = require "./timeout"()
 local flags = require "./flags"
+local components = require "./components"
+local jsx = require "./jsx"
 
 export type Source<T> = source.Source<T>
 export type source<T> = Source<T>
@@ -96,7 +98,17 @@ local vide = {
             stepped = nil
         end
         step(dt)
-    end
+    end,
+
+    -- typescript
+    jsx = jsx,
+    match = switch,
+    Fragment = components.Fragment,
+    Switch = components.Switch,
+    Case = components.Case,
+    For = components.For,
+    Index = components.Index,
+    Show = components.Show,
 }
 
 setmetatable(vide :: any, {

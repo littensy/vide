@@ -1,4 +1,4 @@
-type Destructor = () => void;
+type Cleanup = () => void;
 type Key = string | number | symbol;
 type Table<K, V> = Map<K, V> | ReadonlyMap<K, V> | { readonly [P in Extract<K, Key>]: V };
 
@@ -41,7 +41,7 @@ declare namespace Vide {
 	 * An object containing the custom logic to invoke when an instance is
 	 * created. Created using `action()` or using the special `action` prop.
 	 */
-	interface VideAction<T extends Instance> {
+	interface Action<T extends Instance> {
 		priority: number;
 		callback: (instance: T) => void;
 	}
@@ -55,13 +55,20 @@ declare namespace Vide {
 	 * Any destructible object that can be passed to `cleanup()`.
 	 */
 	type Disposable =
-		| Destructor
+		| Cleanup
 		| Instance
 		| RBXScriptConnection
+		| thread
 		| { disconnect(): void }
 		| { destroy(): void }
 		| { Disconnect(): void }
 		| { Destroy(): void };
+
+	/**
+	 * A component return value that can optionally provide a delay time in
+	 * seconds before being destroyed.
+	 */
+	type MaybeDelayed<T> = T | LuaTuple<[T, number?]>;
 
 	/**
 	 * Strict mode is designed to help the development process by adding
@@ -79,6 +86,8 @@ declare namespace Vide {
 	 * @see https://centau.github.io/vide/api/strict-mode
 	 */
 	let strict: boolean;
+	let defaults: boolean;
+	let defer_nested_properties: boolean;
 
 	/**
 	 * Creates a new stable scope, where creation of effects can be tracked
@@ -94,11 +103,11 @@ declare namespace Vide {
 	 * @see https://centau.github.io/vide/api/reactivity-core#root
 	 */
 	// overload for a tuple return
-	function root<T extends unknown[]>(fn: (destroy: Destructor) => LuaTuple<T>): LuaTuple<[Destructor, ...T]>;
+	function root<T extends unknown[]>(fn: (destroy: Cleanup) => LuaTuple<T>): LuaTuple<[Cleanup, ...T]>;
 	// overload for a single return
-	function root<T>(fn: (destroy: Destructor) => T): LuaTuple<[Destructor, T]>;
+	function root<T>(fn: (destroy: Cleanup) => T): LuaTuple<[Cleanup, T]>;
 	// overload for no return
-	function root(fn: (destroy: Destructor) => void): Destructor;
+	function root(fn: (destroy: Cleanup) => void): Cleanup;
 
 	/**
 	 * Runs a function in a new stable scope and optionally applies its result
@@ -115,7 +124,7 @@ declare namespace Vide {
 	 *
 	 * @see https://centau.github.io/vide/api/creation#mount
 	 */
-	function mount<T>(component: () => T, target?: Instance): Destructor;
+	function mount<T>(component: () => T, target?: Instance): Cleanup;
 
 	/**
 	 * Creates a new instance and applies any given properties.
@@ -136,6 +145,11 @@ declare namespace Vide {
 	): (props?: LegacyInstanceProps<CreatableInstances[K]>) => CreatableInstances[K];
 	// overload where a template instance is passed
 	function create<T extends Instance>(instance: T): (props?: LegacyInstanceProps<T>) => T;
+	// alternate syntax where properties are passed directly
+	function create<K extends keyof CreatableInstances>(
+		className: K,
+		props: LegacyInstanceProps<CreatableInstances[K]>,
+	): CreatableInstances[K];
 
 	/**
 	 * Craetes a reactive state container that can be read and updated. Calling
@@ -203,7 +217,9 @@ declare namespace Vide {
 	 * @see https://centau.github.io/vide/api/reactivity-flow#switch
 	 */
 	// switch is a reserved keyword
-	function match<T extends Key, U extends Node>(source: () => T): (map: { [P in T]?: () => U }) => () => U | undefined;
+	function match<Match extends Key, Result extends Node>(
+		source: () => Match,
+	): (map: { [P in Match]?: (show: () => boolean) => MaybeDelayed<Result> }) => () => Result | undefined;
 
 	/**
 	 * Shows one of two components depending on an input source. Returns a source
@@ -223,7 +239,11 @@ declare namespace Vide {
 	 *
 	 * @see https://centau.github.io/vide/api/reactivity-flow#show
 	 */
-	function show<T, U = undefined>(source: () => any, component: () => T, fallback?: () => U): () => T | U;
+	function show<Condition, Result, Fallback = undefined>(
+		source: () => Condition,
+		component: (value: () => NonNullable<Condition>, show: () => boolean) => MaybeDelayed<Result>,
+		fallback?: (show: () => boolean) => MaybeDelayed<Fallback>,
+	): () => Result | Fallback;
 
 	/**
 	 * Maps each _key_ in a table source to a component. Returns a source holding
@@ -237,16 +257,22 @@ declare namespace Vide {
 	 * - Keys whose values have changed will be untouched.
 	 *
 	 * @param input The table source to map over.
-	 * @param transform The function to transform each value in the table.
+	 * @param component The function to transform each value in the table.
 	 *
 	 * @returns A source holding an array of the rendered components.
 	 *
 	 * @see https://centau.github.io/vide/api/reactivity-flow#indexes
 	 */
 	// overload for an array input
-	function indexes<VI, VO>(input: () => readonly VI[], transform: (value: () => VI, index: number) => VO): () => VO[];
+	function indexes<VI, VO>(
+		input: () => readonly VI[],
+		component: (value: () => VI, index: number, show: () => boolean) => MaybeDelayed<VO>,
+	): () => VO[];
 	// overload for a map or object input
-	function indexes<K, VI, VO>(input: () => Table<K, VI>, transform: (value: () => VI, key: K) => VO): () => VO[];
+	function indexes<K, VI, VO>(
+		input: () => Table<K, VI>,
+		component: (value: () => VI, key: K, show: () => boolean) => MaybeDelayed<VO>,
+	): () => VO[];
 
 	/**
 	 * Maps each _value_ in a table source to a component. Returns a source
@@ -265,16 +291,22 @@ declare namespace Vide {
 	 * values to avoid this issue.
 	 *
 	 * @param input The table source to map over.
-	 * @param transform The function to transform each value in the table.
+	 * @param component The function to transform each value in the table.
 	 *
 	 * @returns A source holding an array of the rendered components.
 	 *
 	 * @see https://centau.github.io/vide/api/reactivity-flow#values
 	 */
 	// overload for an array input
-	function values<VI, VO>(input: () => readonly VI[], transform: (value: VI, index: () => number) => VO): () => VO[];
+	function values<VI, VO>(
+		input: () => readonly VI[],
+		component: (value: VI, index: () => number, show: () => boolean) => MaybeDelayed<VO>,
+	): () => VO[];
 	// overload for a map or object input
-	function values<K, VI, VO>(input: () => Table<K, VI>, transform: (value: VI, key: () => K) => VO): () => VO[];
+	function values<K, VI, VO>(
+		input: () => Table<K, VI>,
+		component: (value: VI, key: () => K, show: () => boolean) => MaybeDelayed<VO>,
+	): () => VO[];
 
 	/**
 	 * Runs the callback function when the scope reruns or is destroyed. Should
@@ -296,7 +328,7 @@ declare namespace Vide {
 	 *
 	 * @see https://centau.github.io/vide/api/reactivity-utility#untrack
 	 */
-	function untrack<T>(source: Source<T>): T;
+	function untrack<T>(source: () => T): T;
 
 	/**
 	 * Reads the source and returns its value. Non-source values are returned
@@ -330,11 +362,16 @@ declare namespace Vide {
 	 * full cycle if undamped.
 	 * @param dampingRatio The amount of resistance applied to the spring.
 	 *
-	 * @returns A new source that moves towards the input source value.
+	 * @returns A tuple containing the spring value source and a configuration
+	 * function to set the spring's position, velocity, and apply impulses.
 	 *
 	 * @see https://centau.github.io/vide/api/animation#spring
 	 */
-	function spring<T extends Animatable>(source: () => T, period?: number, dampingRatio?: number): Source<T>;
+	function spring<T extends Animatable>(
+		source: () => T,
+		period?: number,
+		dampingRatio?: number,
+	): LuaTuple<[value: () => T, config: (config: { position?: T; velocity?: T; impulse?: T }) => void]>;
 
 	/**
 	 * Creates a callback that can be passed to `create()` to invoke custom
@@ -348,7 +385,7 @@ declare namespace Vide {
 	 *
 	 * @see https://centau.github.io/vide/api/creation#action
 	 */
-	function action<T extends Instance>(callback: (instance: T) => void, priority?: number): VideAction<T>;
+	function action<T extends Instance>(callback: (instance: T) => void, priority?: number): Action<T>;
 
 	/**
 	 * Creates an action that runs the callback when a property changes on an
@@ -365,7 +402,7 @@ declare namespace Vide {
 	function changed<T extends Instance, K extends keyof WritableInstanceProperties<T>>(
 		key: K,
 		callback: (value: WritableInstanceProperties<T>[K]) => void,
-	): VideAction<T>;
+	): Action<T>;
 
 	/**
 	 * Applies properties to an existing instance. Similarly to `create()`, the
@@ -428,12 +465,12 @@ declare namespace Vide {
 	// overload for an array input
 	function For<VI, VO extends Node | void>(props: {
 		each: () => readonly VI[];
-		children: (item: VI, index: () => number) => VO;
+		children: (item: VI, index: () => number, show: () => boolean) => MaybeDelayed<VO>;
 	}): () => VO[];
 	// overload for a map or object input
 	function For<K, VI, VO extends Node | void>(props: {
 		each: () => Table<K, VI>;
-		children: (value: VI, key: () => K) => VO;
+		children: (value: VI, key: () => K, show: () => boolean) => MaybeDelayed<VO>;
 	}): () => VO[];
 
 	/**
@@ -464,12 +501,12 @@ declare namespace Vide {
 	// overload for an array input
 	function Index<VI, VO extends Node | void>(props: {
 		each: () => readonly VI[];
-		children: (item: () => VI, index: number) => VO;
+		children: (item: () => VI, index: number, show: () => boolean) => MaybeDelayed<VO>;
 	}): () => VO[];
 	// overload for a map or object input
 	function Index<K, VI, VO extends Node | void>(props: {
 		each: () => Table<K, VI>;
-		children: (value: () => VI, key: K) => VO;
+		children: (value: () => VI, key: K, show: () => boolean) => MaybeDelayed<VO>;
 	}): () => VO[];
 
 	/**
@@ -508,7 +545,7 @@ declare namespace Vide {
 	 *
 	 * @see Switch
 	 */
-	function Case<T>(props: { match: T; children: () => Node | void }): Node;
+	function Case<T>(props: { match: T; children: (show: () => boolean) => MaybeDelayed<Node> | void }): Node;
 
 	/**
 	 * Shows one of two components depending on an input source. Renders the
@@ -518,7 +555,7 @@ declare namespace Vide {
 	 * @example
 	 * ```tsx
 	 * <Show when={state} fallback={() => <Loading />}>
-	 *   {() => <Content />}
+	 *   {(show) => <Content />}
 	 * </Show>
 	 * ```
 	 *
@@ -530,7 +567,11 @@ declare namespace Vide {
 	 *
 	 * @see https://centau.github.io/vide/api/reactivity-flow#show
 	 */
-	function Show(props: { when: () => any; children: () => Node | void; fallback?: () => Node | void }): () => Node;
+	function Show(props: {
+		when: () => any;
+		children: (show: () => boolean) => MaybeDelayed<Node> | void;
+		fallback?: (show: () => boolean) => MaybeDelayed<Node> | void;
+	}): () => Node;
 
 	// Context
 
@@ -569,7 +610,7 @@ declare namespace Vide {
 	/**
 	 * A value that can be passed to a JSX element.
 	 */
-	type Node = Instance | InstanceAttributes<Instance> | VideAction<any> | FragmentNode | FunctionNode | undefined;
+	type Node = Instance | InstanceAttributes<Instance> | Action<any> | FragmentNode | FunctionNode | undefined;
 
 	/**
 	 * A value that can be passed to the `create()` function.
@@ -579,7 +620,7 @@ declare namespace Vide {
 	type LegacyNode<T extends Instance> =
 		| Instance
 		| InstanceAttributes<T>
-		| VideAction<T>
+		| Action<T>
 		| FragmentNode
 		| FunctionNode
 		| undefined;
@@ -664,9 +705,7 @@ declare namespace Vide {
 	 */
 	type LegacyInstanceProps<T extends Instance> = { [K in number]?: LegacyNode<T> } & InstancePropertySources<T> &
 		InstanceEventCallbacks<T>;
-}
 
-declare global {
 	namespace JSX {
 		type Element = Vide.Node;
 		type ElementType = string | ((props: any) => Element | void);
@@ -677,212 +716,8 @@ declare global {
 			children: {};
 		}
 
-		interface IntrinsicElements {
-			accessory: Vide.InstanceAttributes<Accessory>;
-			accessorydescription: Vide.InstanceAttributes<AccessoryDescription>;
-			accoutrement: Vide.InstanceAttributes<Accoutrement>;
-			actor: Vide.InstanceAttributes<Actor>;
-			adgui: Vide.InstanceAttributes<AdGui>;
-			adportal: Vide.InstanceAttributes<AdPortal>;
-			aircontroller: Vide.InstanceAttributes<AirController>;
-			alignorientation: Vide.InstanceAttributes<AlignOrientation>;
-			alignposition: Vide.InstanceAttributes<AlignPosition>;
-			angularvelocity: Vide.InstanceAttributes<AngularVelocity>;
-			animation: Vide.InstanceAttributes<Animation>;
-			animationconstraint: Vide.InstanceAttributes<AnimationConstraint>;
-			animationcontroller: Vide.InstanceAttributes<AnimationController>;
-			animationrigdata: Vide.InstanceAttributes<AnimationRigData>;
-			animator: Vide.InstanceAttributes<Animator>;
-			archandles: Vide.InstanceAttributes<ArcHandles>;
-			atmosphere: Vide.InstanceAttributes<Atmosphere>;
-			attachment: Vide.InstanceAttributes<Attachment>;
-			audioanalyzer: Vide.InstanceAttributes<AudioAnalyzer>;
-			audiochorus: Vide.InstanceAttributes<AudioChorus>;
-			audiocompressor: Vide.InstanceAttributes<AudioCompressor>;
-			audiodeviceinput: Vide.InstanceAttributes<AudioDeviceInput>;
-			audiodeviceoutput: Vide.InstanceAttributes<AudioDeviceOutput>;
-			audiodistortion: Vide.InstanceAttributes<AudioDistortion>;
-			audioecho: Vide.InstanceAttributes<AudioEcho>;
-			audioemitter: Vide.InstanceAttributes<AudioEmitter>;
-			audioequalizer: Vide.InstanceAttributes<AudioEqualizer>;
-			audiofader: Vide.InstanceAttributes<AudioFader>;
-			audioflanger: Vide.InstanceAttributes<AudioFlanger>;
-			audiolistener: Vide.InstanceAttributes<AudioListener>;
-			audiopitchshifter: Vide.InstanceAttributes<AudioPitchShifter>;
-			audioplayer: Vide.InstanceAttributes<AudioPlayer>;
-			audioreverb: Vide.InstanceAttributes<AudioReverb>;
-			ballsocketconstraint: Vide.InstanceAttributes<BallSocketConstraint>;
-			beam: Vide.InstanceAttributes<Beam>;
-			billboardgui: Vide.InstanceAttributes<BillboardGui>;
-			blockmesh: Vide.InstanceAttributes<BlockMesh>;
-			bloomeffect: Vide.InstanceAttributes<BloomEffect>;
-			blureffect: Vide.InstanceAttributes<BlurEffect>;
-			bodyangularvelocity: Vide.InstanceAttributes<BodyAngularVelocity>;
-			bodycolors: Vide.InstanceAttributes<BodyColors>;
-			bodyforce: Vide.InstanceAttributes<BodyForce>;
-			bodygyro: Vide.InstanceAttributes<BodyGyro>;
-			bodyposition: Vide.InstanceAttributes<BodyPosition>;
-			bodythrust: Vide.InstanceAttributes<BodyThrust>;
-			bodyvelocity: Vide.InstanceAttributes<BodyVelocity>;
-			bone: Vide.InstanceAttributes<Bone>;
-			boolvalue: Vide.InstanceAttributes<BoolValue>;
-			boxhandleadornment: Vide.InstanceAttributes<BoxHandleAdornment>;
-			brickcolorvalue: Vide.InstanceAttributes<BrickColorValue>;
-			buoyancysensor: Vide.InstanceAttributes<BuoyancySensor>;
-			camera: Vide.InstanceAttributes<Camera>;
-			canvasgroup: Vide.InstanceAttributes<CanvasGroup>;
-			cframevalue: Vide.InstanceAttributes<CFrameValue>;
-			charactermesh: Vide.InstanceAttributes<CharacterMesh>;
-			chorussoundeffect: Vide.InstanceAttributes<ChorusSoundEffect>;
-			clickdetector: Vide.InstanceAttributes<ClickDetector>;
-			climbcontroller: Vide.InstanceAttributes<ClimbController>;
-			clouds: Vide.InstanceAttributes<Clouds>;
-			color3value: Vide.InstanceAttributes<Color3Value>;
-			colorcorrectioneffect: Vide.InstanceAttributes<ColorCorrectionEffect>;
-			compressorsoundeffect: Vide.InstanceAttributes<CompressorSoundEffect>;
-			conehandleadornment: Vide.InstanceAttributes<ConeHandleAdornment>;
-			configuration: Vide.InstanceAttributes<Configuration>;
-			controllermanager: Vide.InstanceAttributes<ControllerManager>;
-			controllerpartsensor: Vide.InstanceAttributes<ControllerPartSensor>;
-			cornerwedgepart: Vide.InstanceAttributes<CornerWedgePart>;
-			curveanimation: Vide.InstanceAttributes<CurveAnimation>;
-			cylinderhandleadornment: Vide.InstanceAttributes<CylinderHandleAdornment>;
-			cylindermesh: Vide.InstanceAttributes<CylinderMesh>;
-			cylindricalconstraint: Vide.InstanceAttributes<CylindricalConstraint>;
-			decal: Vide.InstanceAttributes<Decal>;
-			depthoffieldeffect: Vide.InstanceAttributes<DepthOfFieldEffect>;
-			distortionsoundeffect: Vide.InstanceAttributes<DistortionSoundEffect>;
-			doubleconstrainedvalue: Vide.InstanceAttributes<DoubleConstrainedValue>;
-			dragdetector: Vide.InstanceAttributes<DragDetector>;
-			dragger: Vide.InstanceAttributes<Dragger>;
-			echosoundeffect: Vide.InstanceAttributes<EchoSoundEffect>;
-			editableimage: Vide.InstanceAttributes<EditableImage>;
-			editablemesh: Vide.InstanceAttributes<EditableMesh>;
-			equalizersoundeffect: Vide.InstanceAttributes<EqualizerSoundEffect>;
-			eulerrotationcurve: Vide.InstanceAttributes<EulerRotationCurve>;
-			facecontrols: Vide.InstanceAttributes<FaceControls>;
-			fire: Vide.InstanceAttributes<Fire>;
-			flangesoundeffect: Vide.InstanceAttributes<FlangeSoundEffect>;
-			floatcurve: Vide.InstanceAttributes<FloatCurve>;
-			floorwire: Vide.InstanceAttributes<FloorWire>;
-			folder: Vide.InstanceAttributes<Folder>;
-			forcefield: Vide.InstanceAttributes<ForceField>;
-			frame: Vide.InstanceAttributes<Frame>;
-			groundcontroller: Vide.InstanceAttributes<GroundController>;
-			handles: Vide.InstanceAttributes<Handles>;
-			highlight: Vide.InstanceAttributes<Highlight>;
-			hingeconstraint: Vide.InstanceAttributes<HingeConstraint>;
-			hole: Vide.InstanceAttributes<Hole>;
-			humanoid: Vide.InstanceAttributes<Humanoid>;
-			humanoidcontroller: Vide.InstanceAttributes<HumanoidController>;
-			humanoiddescription: Vide.InstanceAttributes<HumanoidDescription>;
-			ikcontrol: Vide.InstanceAttributes<IKControl>;
-			imagebutton: Vide.InstanceAttributes<ImageButton>;
-			imagehandleadornment: Vide.InstanceAttributes<ImageHandleAdornment>;
-			imagelabel: Vide.InstanceAttributes<ImageLabel>;
-			intconstrainedvalue: Vide.InstanceAttributes<IntConstrainedValue>;
-			intvalue: Vide.InstanceAttributes<IntValue>;
-			keyframe: Vide.InstanceAttributes<Keyframe>;
-			keyframemarker: Vide.InstanceAttributes<KeyframeMarker>;
-			keyframesequence: Vide.InstanceAttributes<KeyframeSequence>;
-			linearvelocity: Vide.InstanceAttributes<LinearVelocity>;
-			lineforce: Vide.InstanceAttributes<LineForce>;
-			linehandleadornment: Vide.InstanceAttributes<LineHandleAdornment>;
-			localizationtable: Vide.InstanceAttributes<LocalizationTable>;
-			markercurve: Vide.InstanceAttributes<MarkerCurve>;
-			materialvariant: Vide.InstanceAttributes<MaterialVariant>;
-			model: Vide.InstanceAttributes<Model>;
-			motor: Vide.InstanceAttributes<Motor>;
-			motor6d: Vide.InstanceAttributes<Motor6D>;
-			nocollisionconstraint: Vide.InstanceAttributes<NoCollisionConstraint>;
-			numberpose: Vide.InstanceAttributes<NumberPose>;
-			numbervalue: Vide.InstanceAttributes<NumberValue>;
-			objectvalue: Vide.InstanceAttributes<ObjectValue>;
-			pants: Vide.InstanceAttributes<Pants>;
-			part: Vide.InstanceAttributes<Part>;
-			particleemitter: Vide.InstanceAttributes<ParticleEmitter>;
-			pitchshiftsoundeffect: Vide.InstanceAttributes<PitchShiftSoundEffect>;
-			planeconstraint: Vide.InstanceAttributes<PlaneConstraint>;
-			pointlight: Vide.InstanceAttributes<PointLight>;
-			pose: Vide.InstanceAttributes<Pose>;
-			prismaticconstraint: Vide.InstanceAttributes<PrismaticConstraint>;
-			proximityprompt: Vide.InstanceAttributes<ProximityPrompt>;
-			rayvalue: Vide.InstanceAttributes<RayValue>;
-			reverbsoundeffect: Vide.InstanceAttributes<ReverbSoundEffect>;
-			rigidconstraint: Vide.InstanceAttributes<RigidConstraint>;
-			rocketpropulsion: Vide.InstanceAttributes<RocketPropulsion>;
-			rodconstraint: Vide.InstanceAttributes<RodConstraint>;
-			ropeconstraint: Vide.InstanceAttributes<RopeConstraint>;
-			rotationcurve: Vide.InstanceAttributes<RotationCurve>;
-			screengui: Vide.InstanceAttributes<ScreenGui>;
-			scrollingframe: Vide.InstanceAttributes<ScrollingFrame>;
-			seat: Vide.InstanceAttributes<Seat>;
-			selectionbox: Vide.InstanceAttributes<SelectionBox>;
-			selectionsphere: Vide.InstanceAttributes<SelectionSphere>;
-			shirt: Vide.InstanceAttributes<Shirt>;
-			shirtgraphic: Vide.InstanceAttributes<ShirtGraphic>;
-			sky: Vide.InstanceAttributes<Sky>;
-			smoke: Vide.InstanceAttributes<Smoke>;
-			sound: Vide.InstanceAttributes<Sound>;
-			soundgroup: Vide.InstanceAttributes<SoundGroup>;
-			sparkles: Vide.InstanceAttributes<Sparkles>;
-			spawnlocation: Vide.InstanceAttributes<SpawnLocation>;
-			specialmesh: Vide.InstanceAttributes<SpecialMesh>;
-			spherehandleadornment: Vide.InstanceAttributes<SphereHandleAdornment>;
-			spotlight: Vide.InstanceAttributes<SpotLight>;
-			springconstraint: Vide.InstanceAttributes<SpringConstraint>;
-			stringvalue: Vide.InstanceAttributes<StringValue>;
-			stylederive: Vide.InstanceAttributes<StyleDerive>;
-			stylelink: Vide.InstanceAttributes<StyleLink>;
-			stylerule: Vide.InstanceAttributes<StyleRule>;
-			stylesheet: Vide.InstanceAttributes<StyleSheet>;
-			sunrayseffect: Vide.InstanceAttributes<SunRaysEffect>;
-			surfaceappearance: Vide.InstanceAttributes<SurfaceAppearance>;
-			surfacegui: Vide.InstanceAttributes<SurfaceGui>;
-			surfacelight: Vide.InstanceAttributes<SurfaceLight>;
-			surfaceselection: Vide.InstanceAttributes<SurfaceSelection>;
-			swimcontroller: Vide.InstanceAttributes<SwimController>;
-			textbox: Vide.InstanceAttributes<TextBox>;
-			textbutton: Vide.InstanceAttributes<TextButton>;
-			textlabel: Vide.InstanceAttributes<TextLabel>;
-			texture: Vide.InstanceAttributes<Texture>;
-			tool: Vide.InstanceAttributes<Tool>;
-			torque: Vide.InstanceAttributes<Torque>;
-			torsionspringconstraint: Vide.InstanceAttributes<TorsionSpringConstraint>;
-			trail: Vide.InstanceAttributes<Trail>;
-			tremolosoundeffect: Vide.InstanceAttributes<TremoloSoundEffect>;
-			trusspart: Vide.InstanceAttributes<TrussPart>;
-			uiaspectratioconstraint: Vide.InstanceAttributes<UIAspectRatioConstraint>;
-			uicorner: Vide.InstanceAttributes<UICorner>;
-			uidragdetector: Vide.InstanceAttributes<UIDragDetector>;
-			uiflexitem: Vide.InstanceAttributes<UIFlexItem>;
-			uigradient: Vide.InstanceAttributes<UIGradient>;
-			uigridlayout: Vide.InstanceAttributes<UIGridLayout>;
-			uilistlayout: Vide.InstanceAttributes<UIListLayout>;
-			uipadding: Vide.InstanceAttributes<UIPadding>;
-			uipagelayout: Vide.InstanceAttributes<UIPageLayout>;
-			uiscale: Vide.InstanceAttributes<UIScale>;
-			uisizeconstraint: Vide.InstanceAttributes<UISizeConstraint>;
-			uistroke: Vide.InstanceAttributes<UIStroke>;
-			uitablelayout: Vide.InstanceAttributes<UITableLayout>;
-			uitextsizeconstraint: Vide.InstanceAttributes<UITextSizeConstraint>;
-			universalconstraint: Vide.InstanceAttributes<UniversalConstraint>;
-			vector3curve: Vide.InstanceAttributes<Vector3Curve>;
-			vector3value: Vide.InstanceAttributes<Vector3Value>;
-			vectorforce: Vide.InstanceAttributes<VectorForce>;
-			vehiclecontroller: Vide.InstanceAttributes<VehicleController>;
-			vehicleseat: Vide.InstanceAttributes<VehicleSeat>;
-			velocitymotor: Vide.InstanceAttributes<VelocityMotor>;
-			videoframe: Vide.InstanceAttributes<VideoFrame>;
-			viewportframe: Vide.InstanceAttributes<ViewportFrame>;
-			wedgepart: Vide.InstanceAttributes<WedgePart>;
-			weld: Vide.InstanceAttributes<Weld>;
-			weldconstraint: Vide.InstanceAttributes<WeldConstraint>;
-			wire: Vide.InstanceAttributes<Wire>;
-			wireframehandleadornment: Vide.InstanceAttributes<WireframeHandleAdornment>;
-			worldmodel: Vide.InstanceAttributes<WorldModel>;
-			wraplayer: Vide.InstanceAttributes<WrapLayer>;
-			wraptarget: Vide.InstanceAttributes<WrapTarget>;
-		}
+		type IntrinsicElements = {
+			[K in keyof CreatableInstances as Lowercase<K>]: Vide.InstanceAttributes<CreatableInstances[K]>;
+		};
 	}
 }
