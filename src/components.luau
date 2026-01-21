@@ -1,8 +1,8 @@
-local context = require(script.Parent.context)
-local show = require(script.Parent.show)
-local switch = require(script.Parent.switch)
-local indexes = require(script.Parent.indexes)
-local values = require(script.Parent.values)
+local context = require("./context")
+local show = require("./show")
+local switch = require("./switch")
+local indexes = require("./indexes")
+local values = require("./values")
 
 type Context<T> = context.Context<T>
 

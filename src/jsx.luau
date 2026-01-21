@@ -1,7 +1,7 @@
-local action = require(script.Parent.action)()
-local changed = require(script.Parent.changed)
-local create = require(script.Parent.create)
-local untrack = require(script.Parent.untrack)
+local action = require("./action")()
+local changed = require("./changed")
+local create = require("./create")
+local untrack = require("./untrack")
 
 type Props = { [any]: any }
 
@@ -23,8 +23,10 @@ local IGNORED_CHANGE_PROPS = {
 
 local tags = {}
 
-for _, class in game:GetService("ReflectionService"):GetClasses() do
-	tags[string.lower(class.Name)] = class.Name
+if game then
+    for _, class in game:GetService("ReflectionService"):GetClasses() do
+	    tags[string.lower(class.Name)] = class.Name
+    end
 end
 
 local function jsx(tag: string | (Props) -> any, props: Props, ...): any
